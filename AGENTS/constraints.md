@@ -117,6 +117,27 @@ PowerShell 里 `cp` 是 `Copy-Item` 的别名、不支持 `-r`。构建脚本已
 
 ---
 
+## 13. Cloudflare Pages 项目**不能**用 CLI 创建
+
+Cloudflare 官方限制：**Git 集成与"直接上传"两种项目类型创建后不可互转**。
+
+- ❌ 不要用 `wrangler pages project create` 建站点项目 → 建成"直接上传"类型，
+  从此**永久无法**接入 Git 自动部署，只能删掉重建
+- ✅ 必须在 dashboard 通过 **Connect to Git** 创建
+- `wrangler pages deploy` 只适合临时验证；生产项目不要用它创建
+
+同理，`wrangler` 也没有绑定自定义域名与操作 DNS 记录的子命令 —— 那些只能在
+dashboard 完成（或走带 `dns:write` 的 API Token）。
+
+---
+
+## 14. 不要动 `a.opccii.com`
+
+该子域由另一个 Pages 项目 `sink-cf` 使用（实测有正常解析记录）。改 DNS 时只碰
+`opccii.com` 与 `backup.opccii.com`，不要批量清理区域内的记录。
+
+---
+
 ## 速查：允许 vs 禁止
 
 | 允许 | 禁止 |
@@ -126,3 +147,5 @@ PowerShell 里 `cp` 是 `Copy-Item` 的别名、不支持 `-r`。构建脚本已
 | 改 `src/i18n/lang/*.ts` 文案 | 在组件里硬编码中文 |
 | 在 dev 下用 Keystatic | 把 Keystatic 挂到生产构建 |
 | 每篇指定 `ogImage` URL | 开启 `dynamicOgImage` |
+| dashboard 里 Connect to Git | 用 `wrangler` 创建生产 Pages 项目 |
+| 只改 `opccii.com` / `backup.opccii.com` | 批量清理区域 DNS（会破坏 `a.opccii.com`） |

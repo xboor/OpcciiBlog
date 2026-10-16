@@ -62,6 +62,8 @@ pnpm lint         # ESLint
 3. **`site.url` 恒定主域名**；备用站不做 noindex，只让 canonical 指向主域
 4. **不要开启 `dynamicOgImage`** → 内置生成器只有拉丁字体，中文会变方块
 5. **正文图片用 `<SmartImage key="..." />` + `src/data/images.json`**，不要散落图床 URL
+6. **不要用 `wrangler` 创建生产 Pages 项目** → 会变成"直接上传"类型，永久失去 Git 自动部署；
+   必须在 dashboard 用 Connect to Git 创建
 
 ---
 

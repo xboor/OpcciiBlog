@@ -32,35 +32,122 @@
 **canonical 始终指向主域**，备用站**不做 noindex**。原因见
 [constraints.md](./constraints.md) 第 3 条。
 
-### giscus 配置怎么拿
+### giscus（本项目已配置完成）
 
-1. 仓库必须是 **public**
-2. 在仓库 Settings → General → Features 中勾选 **Discussions**
-3. 创建一个 Discussion 分类（如 `Announcements`，类型选 Announcement 以避免非管理员建帖）
-4. 打开 <https://giscus.app/>，填入 `user/repo` 与分类，复制它生成的 4 个值
+已在 `2026-10-17` 通过 GitHub GraphQL API 开启 Discussions 并取得配置，`.env` 里已填好：
+
+| 值 | 内容 |
+| --- | --- |
+| repo | `xboor/OpcciiBlog` |
+| repo-id | `R_kgDOVM15YQ` |
+| category | `Announcements` |
+| category-id | `DIC_kwDOVM15Yc4DIrPv` |
+
+选 `Announcements`（Announcement 类型）是刻意的：普通用户无法在该分类下建帖，
+只有 giscus App 能建，可防止访客随手创建重复主题。这 4 个值**本身是公开的**，
+会内联在每个文章页的 HTML 里（原因见第 5.1 节），所以写进文档无风险。
+
+若将来要换仓库/分类，重新取值的办法：仓库 Settings → General → Features 勾选
+**Discussions** → 建分类 → 到 <https://giscus.app/> 填入 `user/repo` 与分类取值。
+仓库必须是 **public**。
 
 ---
 
-## 2. Cloudflare Pages（主站）
+## 2. Cloudflare Pages（主站 · opccii.com）
 
-在 CF Dashboard 以 **Git 集成**方式创建项目：
+### 2.1 本站实际状态（已核实）
+
+| 项 | 状态 |
+| --- | --- |
+| 账号 ID | `922e98f4017b9bb27e0ec58f41fec4ce` |
+| `opccii.com` 区域 | **已在 Cloudflare**（NS = `gabriella/nico.ns.cloudflare.com`），区域活跃 |
+| `opccii.com` 顶点记录 | **无任何记录** → 需在接入 Pages 时创建 |
+| `a.opccii.com` | 由另一个项目 `sink-cf` 使用，**不要动这条记录** |
+| 旧项目 `opccii-blog` | 已绑定 `opccii.com`，4 个月前废弃、连的是旧仓库 → **需先解除占用** |
+
+### 2.2 ⚠️ 必须用 Git 集成创建项目（重要陷阱）
+
+Cloudflare 官方明确：**「If you choose Direct Upload, you cannot switch to Git integration
+later. You will have to create a new project with Git integration.」**
+
+即：项目类型（Git 集成 / 直接上传）**创建后不可互转**。
+
+- ❌ **不要**用 `wrangler pages project create` 建项目 —— 那会建成"直接上传"类型，
+  从此永久无法接入 Git 自动部署，废掉 push→自动发布的工作流
+- ✅ **必须**在 dashboard 里通过 **Connect to Git** 创建
+
+### 2.3 操作步骤
+
+**A. 解除旧项目对域名的占用**
+
+1. 进入旧项目 `opccii-blog` → Custom domains → 移除 `opccii.com`
+2. 若不再需要该项目，可顺手删除它（它连的是 4 个月前的旧仓库）
+
+**B. 以 Git 集成创建新项目**
+
+1. CF Dashboard → Workers & Pages → Create → Pages → **Connect to Git**
+2. 授权 GitHub：若 CF GitHub App 的仓库授权范围是 "Only select repositories"，
+   需先把 `xboor/OpcciiBlog` 加入其可见列表（GitHub → Settings → Applications）
+3. 选择仓库 `xboor/OpcciiBlog`，分支 `main`
 
 | 配置项 | 值 |
 | --- | --- |
+| Framework preset | `Astro`（或 None，不影响结果） |
 | Build command | `pnpm build` |
 | Build output directory | `dist` |
-| Node 版本 | 22（环境变量 `NODE_VERSION=22`） |
-| 环境变量 | `PUBLIC_DEPLOY_TARGET=main` + 第 1 节其余变量 |
+| 环境变量 `NODE_VERSION` | `22` |
+
+**C. 填环境变量**（Settings → Environment variables，**Production 环境**）
+
+| 变量 | 值 |
+| --- | --- |
+| `PUBLIC_DEPLOY_TARGET` | `main` |
+| `PUBLIC_GISCUS_REPO` | `xboor/OpcciiBlog` |
+| `PUBLIC_GISCUS_REPO_ID` | `R_kgDOVM15YQ` |
+| `PUBLIC_GISCUS_CATEGORY` | `Announcements` |
+| `PUBLIC_GISCUS_CATEGORY_ID` | `DIC_kwDOVM15Yc4DIrPv` |
+| `PUBLIC_CF_ANALYTICS_TOKEN` | 可选，CF Web Analytics 的 beacon token |
+| `PUBLIC_GOOGLE_SITE_VERIFICATION` | 可选，Search Console 验证串 |
+
+> `.env` **不会**自动同步到平台 —— 本地 `.env` 只用于本地构建与预览。
+
+**D. 绑定主域名**
+
+1. 新项目 → Custom domains → Set up a custom domain → 输入 `opccii.com`
+2. 区域已在 CF，Cloudflare 会**自动创建所需的 CNAME 记录**（已经是 CF 权威区，
+   无需手工加 A 记录，apex 由 CF 做 CNAME 拉平）
+3. 等证书签发完成（通常几分钟）
+
+**E. 触发首次部署**
+
+push 一次或点 dashboard 上的 "Retry deployment" 即可。之后 `git push` 自动构建。
+
+**F. 可选：Cloudflare Web Analytics**
+
+Dashboard → Analytics → Web Analytics → 添加站点 → 复制 beacon token 填进
+`PUBLIC_CF_ANALYTICS_TOKEN`（仅主站输出该脚本）。
 
 不需要 `wrangler.toml`，也不需要额外的 CI 配置文件。
 
 ---
 
-## 3. Azure Static Web Apps（备用站）
+## 3. Azure Static Web Apps（备用站 · backup.opccii.com）
 
 **全程在 Azure Portal 网页操作，不需要 Azure CLI。**（CLI 不支持个人账号，原因见第 5 节）
 
-创建步骤：
+### 3.1 本站的域名安排
+
+| 项 | 值 |
+| --- | --- |
+| 备用域名 | `backup.opccii.com`（当前**无 DNS 记录**，需新建） |
+| 该记录类型 | `CNAME` → Azure SWA 分配的默认主机名（形如 `xxx.azurestaticapps.net`） |
+| 代理状态 | 建议先设为 **DNS only（灰云）**，等 Azure 验证并签发证书后再视需要切为代理 |
+| 构建环境变量 | `PUBLIC_DEPLOY_TARGET=backup` |
+
+> `backup.opccii.com` 是子域名，用标准 CNAME 即可，**不需要**像 apex 那样做拉平。
+> Azure SWA 的证书签发需要域名能解析到它，所以先加记录再在 Portal 里绑域名。
+
+### 3.2 创建步骤
 
 1. 用个人 Microsoft 账号登录 <https://portal.azure.com>
 2. 创建资源 → 搜索 **Static Web App**
@@ -146,16 +233,40 @@ npx wrangler whoami     # 检查登录状态
 
 > **日常写作只需要 `git`。** 两端的自动部署都不依赖任何 CLI 登录。
 
+### 5.1 关于 `PUBLIC_` 变量为什么可以进公开仓库
+
+`.env` 本身不会泄露（已被 `.gitignore` 忽略、实测 `git check-ignore` 生效）。但更重要的是：
+**这些带 `PUBLIC_` 前缀的值本来就注定是公开的**，不需要"泄露"这个动作。
+
+实测：用假值构建后，`PUBLIC_CF_ANALYTICS_TOKEN` 会内联进全部 10 个页面的 HTML，
+giscus 四项会内联进文章页。任何人右键「查看源代码」即可读到 —— 因为浏览器必须能读到
+它们，统计与评论才能工作。这是 Astro `PUBLIC_` 前缀的设计语义，不是漏配。
+
+逐项结论：这些变量**没有一个是真秘密**（CF analytics token 只能伪造统计数字，
+giscus 四项本就是 giscus.app 明文给出的嵌入参数）。
+
+**真正的密钥不能在 `.env` 里**：
+
+| 密钥 | 存放位置 |
+| --- | --- |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | GitHub Actions Secrets（加密，clone/fork 拿不到） |
+| Cloudflare 侧 | 走 GitHub App 授权，仓库不放 token |
+
+铁律：**任何不带 `PUBLIC_` 的机密都不要写进本仓库**。本项目是纯静态、无服务端运行时，
+所以机密只能放 CI 的 Secrets。提交前 `git status` 若看到 `.env` 出现在未跟踪列表里，
+说明 ignore 失效了 —— 立即停下排查。
+
 ---
 
 ## 6. 部署验证清单
 
 上线后逐项确认：
 
-- [ ] 主域 `/` 可访问，`<link rel="canonical">` 指向主域
-- [ ] 主域 `/sitemap-index.xml` 存在，`/robots.txt` 含 `Sitemap:` 行
-- [ ] 备域可访问，且**不生成** sitemap、`robots.txt` 无 `Sitemap:` 行
+- [ ] `https://opccii.com/` 可访问，`<link rel="canonical">` 指向 `opccii.com`
+- [ ] `opccii.com/sitemap-index.xml` 存在，`/robots.txt` 含 `Sitemap:` 行
+- [ ] `backup.opccii.com` 可访问，且**不生成** sitemap、`robots.txt` 无 `Sitemap:` 行
 - [ ] 备域 canonical 指向主域，且**没有** `noindex`
+- [ ] `a.opccii.com`（另一个项目）**未受影响**
 - [ ] 主域 `/search/` 能搜到中文（依赖 Pagefind 索引已随产物部署）
 - [ ] 文章页公式、代码高亮、callout 正常
 - [ ] giscus 评论能加载（仓库 public、Discussions 已开启）
