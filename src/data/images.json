@@ -1,0 +1,8 @@
+{
+  "hello-world-cover": {
+    "primary": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20desk%20with%20laptop%20and%20coffee%2C%20soft%20morning%20light%2C%20clean%20flat%20illustration%2C%20tech%20blog%20hero&image_size=landscape_16_9",
+    "fallbacks": [
+      "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20workspace%20with%20laptop%2C%20warm%20light%2C%20flat%20illustration&image_size=square_hd"
+    ]
+  }
+}

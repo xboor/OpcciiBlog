@@ -1,0 +1,60 @@
+---
+import { resolveImage } from "@/utils/resolveImage";
+
+type Props = {
+  /** src/data/images.json 中的键（推荐，可自动切换备用图床） */
+  key?: string;
+  /** 或直接指定完整图片 URL（与 key 二选一） */
+  src?: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  loading?: "lazy" | "eager";
+  class?: string;
+};
+
+const { key, src, alt, width, height, loading = "lazy", class: className } =
+  Astro.props;
+
+const chain = key ? resolveImage(key) : src ? [src] : null;
+
+if (!chain || chain.length === 0) {
+  throw new Error(
+    `SmartImage: 未找到图片（key="${key ?? ""}"，src="${src ?? ""}"）`
+  );
+}
+
+const [primary, ...fallbacks] = chain;
+---
+
+<img
+  src={primary}
+  data-fallback-chain={fallbacks.join("|")}
+  {alt}
+  {width}
+  {height}
+  loading={loading}
+  decoding="async"
+  class={className}
+/>
+
+<script>
+  // 图片加载失败时，按 data-fallback-chain 里的备用地址依次重试（一键切换备用图床）。
+  document.addEventListener(
+    "error",
+    event => {
+      const img = event.target;
+      if (!(img instanceof HTMLImageElement)) return;
+
+      const chain = img.dataset.fallbackChain;
+      if (!chain) return;
+
+      const [next, ...rest] = chain.split("|");
+      if (!next) return;
+
+      img.dataset.fallbackChain = rest.join("|");
+      img.src = next;
+    },
+    true // error 事件不冒泡，必须用捕获阶段
+  );
+</script>

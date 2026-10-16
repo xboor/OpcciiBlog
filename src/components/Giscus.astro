@@ -1,0 +1,85 @@
+---
+import {
+  PUBLIC_GISCUS_REPO,
+  PUBLIC_GISCUS_REPO_ID,
+  PUBLIC_GISCUS_CATEGORY,
+  PUBLIC_GISCUS_CATEGORY_ID,
+} from "astro:env/client";
+
+const repo = PUBLIC_GISCUS_REPO;
+const repoId = PUBLIC_GISCUS_REPO_ID;
+const category = PUBLIC_GISCUS_CATEGORY;
+const categoryId = PUBLIC_GISCUS_CATEGORY_ID;
+
+// 未配置完整时完全不渲染，避免对 giscus.app 发起无效请求。
+const configured = Boolean(repo && repoId && category && categoryId);
+---
+
+{
+  configured && (
+    <section id="comments" class="mt-12">
+      <h2 class="mb-4 text-xl font-semibold">评论</h2>
+      <div
+        class="giscus"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+      />
+    </section>
+  )
+}
+
+<script>
+  const GISCUS_ORIGIN = "https://giscus.app";
+
+  function themeName() {
+    return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  }
+
+  function mountGiscus() {
+    const container = document.getElementById("comments");
+    if (!container || container.dataset.mounted === "true") return;
+
+    const target = container.querySelector<HTMLElement>(".giscus");
+    if (!target) return;
+    container.dataset.mounted = "true";
+
+    const script = document.createElement("script");
+    script.src = `${GISCUS_ORIGIN}/client.js`;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.setAttribute("data-repo", target.dataset.repo ?? "");
+    script.setAttribute("data-repo-id", target.dataset.repoId ?? "");
+    script.setAttribute("data-category", target.dataset.category ?? "");
+    script.setAttribute("data-category-id", target.dataset.categoryId ?? "");
+    script.setAttribute("data-mapping", "pathname");
+    script.setAttribute("data-strict", "0");
+    script.setAttribute("data-reactions-enabled", "1");
+    script.setAttribute("data-emit-metadata", "0");
+    script.setAttribute("data-input-position", "bottom");
+    script.setAttribute("data-theme", themeName());
+    script.setAttribute("data-lang", "zh-CN");
+    script.setAttribute("data-loading", "lazy");
+    target.appendChild(script);
+  }
+
+  // 亮/暗色切换时同步 giscus 主题
+  function syncGiscusTheme() {
+    const iframe = document.querySelector("iframe.giscus-frame");
+    if (!(iframe instanceof HTMLIFrameElement) || !iframe.contentWindow) return;
+    iframe.contentWindow.postMessage(
+      { giscus: { setConfig: { theme: themeName() } } },
+      GISCUS_ORIGIN
+    );
+  }
+
+  mountGiscus();
+  document.addEventListener("astro:page-load", mountGiscus);
+
+  // 主题脚本会改写 <html data-theme>，监听该属性即可。
+  new MutationObserver(syncGiscusTheme).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+</script>

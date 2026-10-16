@@ -1,0 +1,70 @@
+---
+title: "你好，世界"
+description: "新博客的第一篇文章：介绍本站的技术栈，并演示数学公式、代码块与提示框的写法。"
+pubDatetime: 2026-10-17T01:30:00+08:00
+featured: true
+tags: ["随笔", "Astro"]
+---
+
+import SmartImage from "@/components/SmartImage.astro";
+
+欢迎来到我的新博客。这篇文章用来验证站点的基础能力：**MDX 正文、图片兜底、数学公式、代码高亮、提示框**。
+
+<SmartImage
+  key="hello-world-cover"
+  alt="博客封面示意图"
+  width={1200}
+  height={675}
+  class="rounded-lg"
+/>
+
+## 为什么选择 Astro
+
+Astro 默认输出纯静态 HTML，几乎没有 JavaScript 开销，非常适合以内容为主的博客。文章正文支持 Markdown 与 MDX，因此可以混写公式、代码与自定义组件。
+
+## 数学公式
+
+行内公式直接写在句子中，例如质能方程 $E = mc^2$，以及二次方程求根公式 $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$。
+
+块级公式使用 `$$ ... $$`：
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2}\,\mathrm{d}x = \sqrt{\pi}
+$$
+
+矩阵也可以正常渲染：
+
+$$
+\mathbf{A} =
+\begin{pmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22}
+\end{pmatrix}
+$$
+
+## 代码块
+
+```ts
+// 一个简单的例子：计算斐波那契数列
+function fib(n: number): number {
+  let [a, b] = [0, 1];
+  for (let i = 0; i < n; i++) {
+    [a, b] = [b, a + b];
+  }
+  return a;
+}
+
+console.log(fib(10)); // 55
+```
+
+## 提示框
+
+> [!NOTE]
+> 这是普通提示。正文支持 GitHub 风格的 callout。
+
+> [!WARNING]
+> 这是警告提示，用来强调需要注意的地方。
+
+## 接下来
+
+后续会陆续补充：图床与图片兜底、数学笔记、以及一些工程实践。感谢阅读。

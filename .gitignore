@@ -1,0 +1,41 @@
+# build output
+dist/
+
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.local
+.env.production
+# 模板文件必须入库（供他人/new clone 复制）
+!.env.example
+
+# macOS-specific files
+.DS_Store
+
+# Windows-specific files
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# jetbrains setting folder
+.idea/
+
+# pagefind 搜索索引：构建产物，由 scripts/copy-pagefind.mjs 自动生成，勿提交
+public/pagefind/
+
+# pnpm
+.pnpm-store
+
+# docker compose
+compose.override.yaml
