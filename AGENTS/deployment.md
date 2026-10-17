@@ -171,8 +171,9 @@ Dashboard → Analytics → Web Analytics → 添加站点 → 复制 beacon tok
   否则备用站会生成 sitemap
 - 用 `Azure/static-web-apps-deploy@v1` 时，若此前已 `pnpm build`，需设
   `skip_app_build: true`，避免重复构建
-- `public/staticwebapp.config.json` 负责 404 回退（`/404.html`）、`trailingSlash: always`
-  与安全响应头，会随构建进入 `dist`，无需额外配置
+- `public/staticwebapp.config.json` 负责 404 回退（`/404.html`）与安全响应头，
+  会随构建进入 `dist`。不要设置 `trailingSlash: always`：Azure 也会给 JS 文件
+  添加尾斜杠，导致相对动态导入路径错误、搜索无法加载。使用平台默认路径处理。
 
 ### 3.1 如果 Azure 账号本身不可用
 
