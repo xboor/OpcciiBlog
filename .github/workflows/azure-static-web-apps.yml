@@ -1,0 +1,47 @@
+name: Deploy Azure backup
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azure-backup
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_DEPLOY_TARGET: backup
+      PUBLIC_CF_ANALYTICS_TOKEN: ""
+      PUBLIC_GOOGLE_SITE_VERIFICATION: ""
+      PUBLIC_GISCUS_REPO: xboor/OpcciiBlog
+      PUBLIC_GISCUS_REPO_ID: R_kgDOVM15YQ
+      PUBLIC_GISCUS_CATEGORY: Announcements
+      PUBLIC_GISCUS_CATEGORY_ID: DIC_kwDOVM15Yc4DIrPv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pnpm
+        run: npm install --global pnpm@12.8.2
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build backup site
+        run: pnpm build
+      - name: Deploy static output
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: dist
+          api_location: ""
+          output_location: ""
+          skip_app_build: true
+          skip_api_build: true
+          production_branch: main
