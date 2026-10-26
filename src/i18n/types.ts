@@ -6,6 +6,12 @@ export interface UIStrings {
     about: string;
     archives: string;
     search: string;
+    nav: string;
+    langSwitch: string;
+  };
+  mirrorNotice: {
+    text: string;
+    link: string;
   };
   post: {
     publishedAt: string;
@@ -19,6 +25,7 @@ export interface UIStrings {
     editPage: string;
     previousPost: string;
     nextPost: string;
+    toc: string;
   };
   pagination: {
     prev: string;
@@ -26,10 +33,22 @@ export interface UIStrings {
     page: string;
   };
   home: {
+    eyebrow: string;
+    headline: string;
+    headlineAccent: string;
+    intro: string;
+    startReading: string;
+    aboutSpace: string;
+    spaceNote: string;
+    topics: string;
+    readPost: string;
+    writing: string;
     socialLinks: string;
     featured: string;
     recentPosts: string;
     allPosts: string;
+    mirrorLink: string;
+    mirrorHint: string;
   };
   footer: {
     copyright: string;
@@ -52,6 +71,7 @@ export interface UIStrings {
     searchDesc: string;
   };
   a11y: {
+    mainNavigation: string;
     skipToContent: string;
     openMenu: string;
     closeMenu: string;

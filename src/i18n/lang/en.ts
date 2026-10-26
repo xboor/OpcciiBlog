@@ -8,6 +8,12 @@ export default {
     about: "About",
     archives: "Archives",
     search: "Search",
+    nav: "Nav",
+    langSwitch: "中文",
+  },
+  mirrorNotice: {
+    text: "This page is loading slowly. Try the mirror site",
+    link: "Open mirror",
   },
   post: {
     publishedAt: "Published at",
@@ -21,6 +27,7 @@ export default {
     editPage: "Edit page",
     previousPost: "Previous Post",
     nextPost: "Next Post",
+    toc: "On this page",
   },
   pagination: {
     prev: "Prev",
@@ -28,6 +35,19 @@ export default {
     page: "Page",
   },
   home: {
+    eyebrow: "OPCCII / PERSONAL JOURNAL",
+    headline: "Thoughts into words.",
+    headlineAccent: "Ideas into understanding.",
+    intro:
+      "Notes on technology, mathematics, and everyday life. A space to connect scattered ideas and keep a record of the things I learn along the way.",
+    startReading: "Start reading",
+    aboutSpace: "About this space",
+    spaceNote: "Start with a question.\nLeave with a thought.",
+    topics: "Follow your curiosity",
+    mirrorLink: "Mirror site",
+    mirrorHint: "Recommended for users in mainland China — faster access",
+    readPost: "Read article",
+    writing: "Words & thoughts",
     socialLinks: "Social Links",
     featured: "Featured",
     recentPosts: "Recent Posts",
@@ -54,6 +74,7 @@ export default {
     searchDesc: "Search any article ...",
   },
   a11y: {
+    mainNavigation: "Main navigation",
     skipToContent: "Skip to content",
     openMenu: "Open menu",
     closeMenu: "Close menu",

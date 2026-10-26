@@ -12,6 +12,7 @@ import { toTransitionName } from "@/utils/toTransitionName";
 import EditPost from "./_components/EditPost.astro";
 import ShareLinks from "./_components/ShareLinks.astro";
 import Giscus from "@/components/Giscus.astro";
+import Toc from "@/components/Toc.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
@@ -74,7 +75,7 @@ const {
   hideEditPost,
 } = post.data;
 
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 
 let ogImageUrl: string | undefined;
 
@@ -95,6 +96,11 @@ if (!ogImageUrl && config.features.dynamicOgImage) {
 const ogImage = ogImageUrl
   ? new URL(ogImageUrl, Astro.url.origin).href
   : undefined;
+
+const rawMarkdownUrl = new URL(
+  `${getPostUrl(post.id, post.filePath).replace(/\/+$/, "")}/index.md`,
+  Astro.site ?? Astro.url
+).href;
 ---
 
 <PostLayout
@@ -104,6 +110,7 @@ const ogImage = ogImageUrl
   canonicalURL={canonicalURL}
   pubDatetime={pubDatetime}
   modDatetime={modDatetime}
+  rawMarkdownUrl={rawMarkdownUrl}
 >
   <Header />
 
@@ -134,6 +141,8 @@ const ogImage = ogImageUrl
       </span>
       <EditPost {hideEditPost} {post} class="max-sm:hidden" />
     </div>
+
+    <Toc headings={headings} />
 
     <article
       id="article"

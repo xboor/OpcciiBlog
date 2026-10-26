@@ -1,0 +1,287 @@
+{
+  "themes": [
+    {
+      "name": "开发工具",
+      "description": "写代码离不开的官网与文档",
+      "children": [
+        {
+          "name": "代码托管",
+          "sites": [
+            {
+              "name": "GitHub",
+              "url": "https://github.com",
+              "icon": "",
+              "desc": "全球最大代码托管平台",
+              "pinned": true
+            },
+            {
+              "name": "GitLab",
+              "url": "https://gitlab.com",
+              "icon": "",
+              "desc": "内置 CI/CD 的一体化 DevOps 平台"
+            },
+            {
+              "name": "Gitee",
+              "url": "https://gitee.com",
+              "icon": "",
+              "desc": "国内代码托管，访问快"
+            },
+            {
+              "name": "Cloudflare",
+              "url": "https://dash.cloudflare.com",
+              "icon": "",
+              "desc": "Pages / Workers / 域名 DNS"
+            },
+            {
+              "name": "Vercel",
+              "url": "https://vercel.com",
+              "icon": "",
+              "desc": "前端应用部署平台"
+            }
+          ]
+        },
+        {
+          "name": "前端开发",
+          "sites": [
+            {
+              "name": "MDN Web Docs",
+              "url": "https://developer.mozilla.org/zh-CN/",
+              "icon": "",
+              "desc": "Web 技术权威文档",
+              "pinned": true
+            },
+            {
+              "name": "Astro",
+              "url": "https://astro.build",
+              "icon": "",
+              "desc": "内容驱动的网站框架"
+            },
+            {
+              "name": "Vite",
+              "url": "https://vite.dev",
+              "icon": "",
+              "desc": "下一代前端构建工具"
+            },
+            {
+              "name": "React",
+              "url": "https://react.dev",
+              "icon": "",
+              "desc": "用户界面库"
+            },
+            {
+              "name": "Tailwind CSS",
+              "url": "https://tailwindcss.com",
+              "icon": "",
+              "desc": "原子化 CSS 框架"
+            },
+            {
+              "name": "TypeScript",
+              "url": "https://www.typescriptlang.org",
+              "icon": "",
+              "desc": "JavaScript 超集"
+            },
+            {
+              "name": "npm",
+              "url": "https://www.npmjs.com",
+              "icon": "",
+              "desc": "JavaScript 包仓库"
+            }
+          ]
+        },
+        {
+          "name": "检索与验证",
+          "sites": [
+            {
+              "name": "Stack Overflow",
+              "url": "https://stackoverflow.com",
+              "icon": "",
+              "desc": "程序员问答社区"
+            },
+            {
+              "name": "DevDocs",
+              "url": "https://devdocs.io",
+              "icon": "",
+              "desc": "全站聚合 API 文档"
+            },
+            {
+              "name": "Can I Use",
+              "url": "https://caniuse.com",
+              "icon": "",
+              "desc": "浏览器兼容性查询"
+            },
+            {
+              "name": "Regex101",
+              "url": "https://regex101.com",
+              "icon": "",
+              "desc": "正则表达式在线调试"
+            },
+            {
+              "name": "Roadmap.sh",
+              "url": "https://roadmap.sh",
+              "icon": "",
+              "desc": "开发者学习路线图"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "技术社区",
+      "description": "看看别人在写什么、聊什么",
+      "children": [
+        {
+          "name": "国内社区",
+          "sites": [
+            {
+              "name": "掘金",
+              "url": "https://juejin.cn",
+              "icon": "",
+              "desc": "中文开发者技术社区"
+            },
+            {
+              "name": "V2EX",
+              "url": "https://v2ex.com",
+              "icon": "",
+              "desc": "创意工作者社区"
+            },
+            {
+              "name": "博客园",
+              "url": "https://www.cnblogs.com",
+              "icon": "",
+              "desc": "老牌程序员博客平台"
+            },
+            {
+              "name": "少数派",
+              "url": "https://sspai.com",
+              "icon": "",
+              "desc": "数字工具与效率内容"
+            }
+          ]
+        },
+        {
+          "name": "国际社区",
+          "sites": [
+            {
+              "name": "Hacker News",
+              "url": "https://news.ycombinator.com",
+              "icon": "",
+              "desc": "科技圈热点聚合"
+            },
+            {
+              "name": "Dev.to",
+              "url": "https://dev.to",
+              "icon": "",
+              "desc": "友好的开发者博客社区"
+            },
+            {
+              "name": "Reddit",
+              "url": "https://www.reddit.com",
+              "icon": "",
+              "desc": "综合兴趣论坛"
+            },
+            {
+              "name": "Product Hunt",
+              "url": "https://www.producthunt.com",
+              "icon": "",
+              "desc": "发现新产品"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "常用网站",
+      "description": "日常上网的入口",
+      "children": [
+        {
+          "name": "搜索与翻译",
+          "sites": [
+            {
+              "name": "Google",
+              "url": "https://www.google.com",
+              "icon": "",
+              "desc": "搜索引擎"
+            },
+            {
+              "name": "Bing",
+              "url": "https://www.bing.com",
+              "icon": "",
+              "desc": "微软搜索引擎"
+            },
+            {
+              "name": "DeepL",
+              "url": "https://www.deepl.com/translator",
+              "icon": "",
+              "desc": "高质量机器翻译"
+            },
+            {
+              "name": "Wikipedia",
+              "url": "https://zh.wikipedia.org",
+              "icon": "",
+              "desc": "自由百科全书"
+            }
+          ]
+        },
+        {
+          "name": "资讯与阅读",
+          "sites": [
+            {
+              "name": "知乎",
+              "url": "https://www.zhihu.com",
+              "icon": "",
+              "desc": "问答与专栏社区"
+            },
+            {
+              "name": "36氪",
+              "url": "https://36kr.com",
+              "icon": "",
+              "desc": "科技商业资讯"
+            },
+            {
+              "name": "IT之家",
+              "url": "https://www.ithome.com",
+              "icon": "",
+              "desc": "科技数码新闻"
+            }
+          ]
+        },
+        {
+          "name": "影音与社交",
+          "sites": [
+            {
+              "name": "Bilibili",
+              "url": "https://www.bilibili.com",
+              "icon": "",
+              "desc": "视频弹幕网站",
+              "pinned": true
+            },
+            {
+              "name": "YouTube",
+              "url": "https://www.youtube.com",
+              "icon": "",
+              "desc": "全球视频平台"
+            },
+            {
+              "name": "网易云音乐",
+              "url": "https://music.163.com",
+              "icon": "",
+              "desc": "在线音乐"
+            },
+            {
+              "name": "微博",
+              "url": "https://weibo.com",
+              "icon": "",
+              "desc": "社交媒体平台"
+            },
+            {
+              "name": "X",
+              "url": "https://x.com",
+              "icon": "",
+              "desc": "原 Twitter"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

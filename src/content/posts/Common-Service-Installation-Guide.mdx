@@ -1,0 +1,351 @@
+---
+title: "常见服务及应用安装指导说明"
+description: "整理 Linux 服务器上常用服务与应用的一键安装与基础配置指南，涵盖 Docker、服务器面板、反向代理、监控探针、内网穿透与常用中间件。"
+pubDatetime: 2026-10-10T01:00:00+08:00
+modDatetime: 2026-10-26T22:30:00+08:00
+tags: ["服务器", "运维"]
+featured: true
+---
+
+记录自用服务器（Debian / Ubuntu 为主）上常见服务的快速安装与基础配置方法。
+本文只做**快速上手**，原理与进阶参数请以各官方文档为准；换源、镜像加速等推荐配合
+[LinuxMirrors](https://linuxmirrors.cn/) 使用。
+
+## 基础准备
+
+拿到一台新服务器，先做三件事：更新系统、装常用工具、校准时区。
+
+```bash
+# Debian / Ubuntu
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget git vim ufw
+
+# 校准时区（国内服务器推荐）
+sudo timedatectl set-timezone Asia/Shanghai
+```
+
+## 服务类
+
+### Docker
+
+容器是一切现代部署的基础，建议第一个装。详细说明参考
+[LinuxMirrors 的 Docker 文档](https://linuxmirrors.cn/other/)。
+
+#### 安装
+
+官方脚本（国外服务器或网络通畅时首选）：
+
+```bash
+curl -fsSL https://get.docker.com | bash
+```
+
+国内服务器推荐 [LinuxMirrors](https://linuxmirrors.cn/)，一键安装并配置镜像加速：
+
+```bash
+bash <(curl -sSL https://linuxmirrors.cn/docker.sh)
+```
+
+备用方案：[SolaTyolo/docker-mirror-setup](https://github.com/SolaTyolo/docker-mirror-setup/)，
+`curl` 与 `wget` 两种写法等价：
+
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/SolaTyolo/docker-mirror-setup/main/setup_docker_mirror.sh)
+```
+
+```bash
+bash <(wget -qO- https://raw.githubusercontent.com/SolaTyolo/docker-mirror-setup/main/setup_docker_mirror.sh)
+```
+
+> [!NOTE]
+> LinuxMirrors 的 `docker.sh` 会同时安装 Docker Engine 与 Docker Compose 插件，
+> 并顺带完成国内镜像加速配置，一般无需再手动改 `daemon.json`。
+
+安装完成后验证：
+
+```bash
+docker run --rm hello-world
+docker compose version
+```
+
+#### 配置镜像加速
+
+一键脚本方式（推荐）：
+
+```bash
+# 配置系统软件源
+bash <(curl -sSL https://linuxmirrors.cn/main.sh)
+# 配置 Docker 镜像源
+bash <(curl -sSL https://linuxmirrors.cn/docker.sh)
+```
+
+手动方式：修改 `/etc/docker/daemon.json`（JSON 格式必须严格，少一个逗号 Docker 都起不来）：
+
+```json
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://dockerproxy.net",
+    "https://docker.m.daocloud.io",
+    "https://docker.xuanyuan.me"
+  ]
+}
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+> [!WARNING]
+> 国内镜像加速站时效性很强，上述地址随时可能失效。拉取失败时优先去
+> [LinuxMirrors](https://linuxmirrors.cn/) 或相关项目主页查看当前可用列表。
+
+### 各类面板
+
+面板适合不想手写配置文件、希望可视化管理服务器与容器的场景，按需选装一个即可。
+
+#### 1Panel
+
+新一代 Linux 服务器运维管理面板（容器化思路，与 Docker 配合好）：
+
+```bash
+bash -c "$(curl -sSL https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh)"
+```
+
+离线安装：
+
+1. 前往 [FIT2CLOUD 开源社区下载页面](https://community.fit2cloud.com/#/products/1panel/downloads) 下载压缩包
+2. 上传至服务器并解压，进入对应目录执行 `bash install.sh`；升级版本使用 `bash upgrade.sh`
+3. 更多细节参考官方教程：[1Panel 离线安装](https://docs.fit2cloud.com/1panel/installation/enterprise-installation/)
+
+#### 宝塔面板
+
+老牌面板，生态成熟、文档多：
+
+```bash
+# 正式版
+if [ -f /usr/bin/curl ];then curl -sSO https://download.bt.cn/install/install_panel.sh;else wget -O install_panel.sh https://download.bt.cn/install/install_panel.sh;fi;bash install_panel.sh rU2tN9mZ
+```
+
+```bash
+# 稳定版
+url=https://download.bt.cn/install/installStable_12.sh;if [ -f /usr/bin/curl ];then curl -sSO $url;else wget -O installStable_12.sh $url;fi;bash installStable_12.sh 3Tmtilpm
+```
+
+> [!NOTE]
+> 命令末尾的字符串是宝塔官方安装脚本的推广标识参数，不影响功能；
+> 在宝塔官网重新生成安装命令时会得到自己的标识。
+
+#### DPanel
+
+轻量级 Docker 可视化管理面板，只管容器、足够克制：
+
+```bash
+# Linux / macOS
+curl -sSL https://dpanel.cc/quick.sh | bash
+```
+
+```powershell
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -Command "iwr -useb https://dpanel.cc/quick.ps1 | iex"
+```
+
+#### CasaOS
+
+面向家庭服务器 / NAS 场景的轻量云系统，应用商店丰富：
+
+```bash
+curl -fsSL https://get.casaos.io | sudo bash
+```
+
+## 反向代理
+
+把 80/443 流量按域名转发到内部服务，并自动管理 HTTPS 证书。
+
+### Caddy
+
+自动申请续期 HTTPS 证书，配置极简，个人站首选：
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update && sudo apt install caddy
+```
+
+`/etc/caddy/Caddyfile` 最小示例：
+
+```caddyfile
+example.com {
+    reverse_proxy localhost:8080
+}
+```
+
+```bash
+sudo systemctl reload caddy
+```
+
+### Nginx Proxy Manager
+
+喜欢网页里点点点配反代 + 证书的话，用 Docker 跑一个 NPM：
+
+```yaml
+services:
+  app:
+    image: jc21/nginx-proxy-manager:latest
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"   # 管理界面
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+```
+
+```bash
+docker compose up -d
+```
+
+默认管理账号 `admin@example.com / changeme`，登录后立即修改。
+
+## 监控与探针
+
+### Uptime Kuma
+
+自托管服务可用性监控，支持 HTTP / TCP / Ping 等多种探测方式与通知渠道：
+
+```bash
+docker run -d \
+  --restart=unless-stopped \
+  --name uptime-kuma \
+  -p 3001:3001 \
+  -v uptime-kuma:/app/data \
+  louislam/uptime-kuma:1
+```
+
+启动后访问 `http://服务器IP:3001` 完成初始化。
+
+### 哪吒监控
+
+服务器探针面板，实时查看各机器的负载、流量与在线状态。安装 Dashboard：
+
+```bash
+curl -L https://raw.githubusercontent.com/nezhahq/nezhahq.github.io/refs/heads/main/install_scripts/install.sh -o install.sh && chmod +x install.sh && env NZ_LANG=zh ./install.sh
+```
+
+在被监控的机器上安装 Agent（参数在 Dashboard 管理后台生成）：
+
+```bash
+curl -L https://raw.githubusercontent.com/nezhahq/agent/main/install.sh -o agent.sh && chmod +x agent.sh && \
+env NZ_SERVER=<面板域名或IP:端口> NZ_TLS=<0或1> NZ_CLIENT_SECRET=<Agent密钥> ./agent.sh
+```
+
+> [!TIP]
+> 安装脚本更新较频繁，以官方文档为准：
+> [哪吒监控安装指南](https://nezhahq.github.io/guide/dashboard.html)。
+
+## 内网穿透与组网
+
+### frp
+
+有公网服务器时，把内网服务暴露出去的经典方案。
+
+内网机器上的 `frpc.toml` 示例：
+
+```toml
+serverAddr = "你的公网服务器IP"
+serverPort = 7000
+
+[[proxies]]
+name = "web"
+type = "http"
+localPort = 8080
+customDomains = ["app.example.com"]
+```
+
+用 systemd 托管，开机自启：
+
+```ini title="/etc/systemd/system/frpc.service"
+[Unit]
+Description=frp client
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/frpc -c /etc/frp/frpc.toml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now frpc
+```
+
+### Cloudflare Tunnel
+
+没有公网 IP 时，用 Cloudflare 的隧道把内网服务发布到公网（无需开放端口）：
+
+```bash
+# Debian / Ubuntu 安装 cloudflared
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt update && sudo apt install cloudflared
+
+# 登录并创建隧道（按交互提示在 Zero Trust 后台配置路由）
+cloudflared tunnel login
+cloudflared tunnel create my-tunnel
+```
+
+临时演示一条命令即可获得公网地址：
+
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
+
+### Tailscale
+
+基于 WireGuard 的零配置组网，适合把多台机器组成虚拟局域网：
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+## 常用中间件
+
+都走 Docker Compose，统一 `restart: unless-stopped` 保证开机自启与崩溃恢复。
+
+```yaml title="docker-compose.yml"
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass 你的强密码
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+```
+
+数据库类服务（MySQL、PostgreSQL 等）建议同目录放置 `.env` 管理密码，
+数据卷挂载到宿主机目录以便备份。
+
+## 通用建议
+
+- **安全第一**：SSH 改用密钥登录、禁用密码与 root 直登；用 `ufw` 只放行必要端口；
+  暴露在公网的面板尽量套反代 + HTTPS，而不是直接裸奔端口
+- **托管方式**：一次性脚本跑完就没了，长期服务交给 systemd 或 Docker 的重启策略
+- **备份**：数据卷和配置目录定期备份到异地（对象存储 / 另一台机器），演练一次恢复流程才算真的有备份
+- **变更留痕**：改过什么配置、为什么改，写在文末或仓库 commit 里，半年后的自己会感谢现在
+
+## 参考资料
+
+- [LinuxMirrors](https://linuxmirrors.cn/) — 系统软件源与 Docker 镜像源一键配置脚本
+- [Docker 官方文档](https://docs.docker.com/)
+- [1Panel 文档](https://docs.fit2cloud.com/1panel/) · [宝塔面板](https://www.bt.cn/new/download.html) · [DPanel](https://dpanel.cc/) · [CasaOS](https://casaos.zimaspace.com/)
+- [Caddy 文档](https://caddyserver.com/docs/) · [Nginx Proxy Manager](https://nginxproxymanager.com/)
+- [Uptime Kuma](https://github.com/louislam/uptime-kuma) · [哪吒监控](https://nezhahq.github.io/)
+- [frp 文档](https://github.com/fatedier/frp) · [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) · [Tailscale](https://tailscale.com/kb)

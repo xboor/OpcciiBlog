@@ -7,6 +7,7 @@ import {
 } from "astro:env/client";
 import { resolveDefaultOgImagePath } from "@/utils/resolveDefaultOgImagePath";
 import { getAssetPath } from "@/utils/withBase";
+import { useTranslations } from "@/i18n";
 import config from "@/config";
 import "@/styles/global.css";
 
@@ -18,6 +19,8 @@ type Props = {
 };
 
 const { site } = config;
+
+const t = useTranslations(Astro.currentLocale ?? site.lang);
 
 const {
   title = site.title,
@@ -43,7 +46,6 @@ const rssHref = getRelativeLocaleUrl(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href={getAssetPath("favicon.svg")} />
-    <link rel="icon" href={getAssetPath("favicon.ico")} />
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
 
@@ -133,10 +135,20 @@ const rssHref = getRelativeLocaleUrl(
   </head>
   <body
     class="bg-background font-app text-foreground selection:bg-accent/75 selection:text-accent-foreground flex min-h-svh flex-col"
+    data-slow-notice-text={t.mirrorNotice.text}
+    data-slow-notice-link={t.mirrorNotice.link}
+    data-slow-notice-url="https://backup.opccii.com"
   >
     <slot />
     <script>
       import "@/scripts/theme";
     </script>
+    {
+      PUBLIC_DEPLOY_TARGET === "main" && (
+        <script>
+          import "@/scripts/slow-load-notice";
+        </script>
+      )
+    }
   </body>
 </html>

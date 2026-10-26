@@ -1,0 +1,610 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+---
+
+<Layout
+  title={`IP & 网络工具 | ${config.site.title}`}
+  description="浏览器信息查看、IP 地理与风险查询、WHOIS、全球多节点 Ping/MTR。"
+>
+  <Header />
+  <Breadcrumb />
+
+  <Main
+    pageTitle="IP & 网络工具"
+    pageDesc="快速查看当前网络信息、IP 归属与信誉、WHOIS 注册数据，以及全球多节点网络诊断。"
+    class="app-prose"
+  >
+    <!-- 1. Ippure 基础信息 Card（默认显示） -->
+    <section class="ipinfo-ippure">
+      <h2 class="text-xl font-semibold mt-8 mb-4">当前 IP 基础信息</h2>
+      <div class="ipinfo-card-wrap">
+        <img
+          src="https://my.ippure.com/v1/card"
+          alt="ippure IP 信息卡"
+          loading="eager"
+          decoding="async"
+          width="720"
+          height="340"
+          referrerpolicy="no-referrer"
+        />
+      </div>
+      <p class="text-sm text-muted-foreground mt-2">
+        数据来源：
+        <a href="https://ipure.dev/" target="_blank" rel="noopener">IPure</a>
+        · 这张卡片自动展示你当前的出口 IP、位置、ASN 与纯净度评分。
+      </p>
+    </section>
+
+    <!-- 2. 浏览器信息（默认隐藏，手动展开） -->
+    <section class="ipinfo-section">
+      <button
+        id="btn-browser"
+        class="button-primary mt-8"
+        type="button"
+        aria-expanded="false"
+      >
+        <span id="btn-browser-label">查看浏览器信息</span>
+      </button>
+      <div
+        id="panel-browser"
+        class="ipinfo-panel hidden"
+        aria-hidden="true"
+      >
+        <div id="browser-loading" class="text-muted-foreground text-sm">正在收集浏览器信息…</div>
+        <dl id="browser-data" class="ipinfo-grid"></dl>
+      </div>
+    </section>
+
+    <!-- 3. IP 详细查询（默认隐藏，手动展开） -->
+    <section class="ipinfo-section">
+      <button
+        id="btn-ip"
+        class="button-primary mt-4"
+        type="button"
+        aria-expanded="false"
+      >
+        <span id="btn-ip-label">获取 IP 详细信息</span>
+      </button>
+      <div
+        id="panel-ip"
+        class="ipinfo-panel hidden"
+        aria-hidden="true"
+      >
+        <div id="ip-loading" class="text-muted-foreground text-sm">正在查询 IP 归属与信誉…</div>
+        <dl id="ip-data" class="ipinfo-grid"></dl>
+        <p class="text-xs text-muted-foreground mt-4">
+          数据来源：
+          <a href="https://www.iping.cc/api" target="_blank" rel="noopener">iping.cc API</a>
+          · 同时参考
+          <a href="https://ipure.dev/" target="_blank" rel="noopener">ipure.dev</a>
+          的纯净度评分体系。
+        </p>
+      </div>
+    </section>
+
+    <!-- 4. WHOIS / RDAP 查询 -->
+    <section class="ipinfo-section">
+      <h2 class="text-xl font-semibold mt-10 mb-4">WHOIS / RDAP 查询</h2>
+      <p class="text-sm text-muted-foreground mb-4">
+        支持域名（example.com）、IPv4、IPv6、ASN（AS15169）。API 由 who.ga 提供，走现代化 RDAP 协议。
+      </p>
+      <div class="ipinfo-whois-input">
+        <input
+          id="whois-input"
+          type="text"
+          placeholder="输入域名、IP 或 ASN，例如 google.com"
+          class="ipinfo-input"
+        />
+        <button
+          id="whois-go"
+          class="button-primary"
+          type="button"
+        >查询</button>
+        <a
+          id="whois-link"
+          class="quiet-link hidden"
+          href="#"
+          target="_blank"
+          rel="noopener"
+        >在 who.ga 新窗口打开 ↗</a>
+      </div>
+      <div class="ipinfo-iframe-wrap">
+        <iframe
+          id="whois-frame"
+          class="ipinfo-iframe"
+          src="about:blank"
+          title="who.ga 查询结果"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </section>
+
+    <!-- 5. 全球多节点 Ping / MTR -->
+    <section class="ipinfo-section">
+      <h2 class="text-xl font-semibold mt-10 mb-4">全球多节点 Ping &amp; MTR</h2>
+      <p class="text-sm text-muted-foreground mb-4">
+        输入任意域名或 IP，由 ping.pe 从全球 170+ 节点同时执行 ICMP ping 和 MTR 路由追踪。
+      </p>
+      <div class="ipinfo-whois-input">
+        <input
+          id="ping-input"
+          type="text"
+          placeholder="输入要测试的域名或 IP，例如 opccii.com"
+          class="ipinfo-input"
+        />
+        <button
+          id="ping-go"
+          class="button-primary"
+          type="button"
+        >开始测试</button>
+        <a
+          id="ping-link"
+          class="quiet-link hidden"
+          href="#"
+          target="_blank"
+          rel="noopener"
+        >在 ping.pe 新窗口打开 ↗</a>
+      </div>
+      <div class="ipinfo-iframe-wrap">
+        <iframe
+          id="ping-frame"
+          class="ipinfo-iframe"
+          src="about:blank"
+          title="ping.pe 多节点测试"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </section>
+
+    <!-- 6. 相关工具导航 -->
+    <section class="ipinfo-tools">
+      <h2 class="text-xl font-semibold mt-10 mb-4">更多 IP &amp; 网络工具</h2>
+      <div class="ipinfo-tool-grid">
+        <a
+          class="ipinfo-tool-card"
+          href="https://ping0.cc/"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="ipinfo-tool-name">ping0.cc</div>
+          <div class="ipinfo-tool-desc">
+            中文 IP 查询、纯净度评分、风控值、CIDR/ASN 历史、同机房探测、适用场景评分。
+          </div>
+        </a>
+        <a
+          class="ipinfo-tool-card"
+          href="https://ip.skk.moe/"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="ipinfo-tool-name">ip.skk.moe</div>
+          <div class="ipinfo-tool-desc">
+            本机 IP 多数据源聚合对比（iP138、IP.cn、Cloudflare、IPinfo.io 同页并排展示）。
+          </div>
+        </a>
+        <a
+          class="ipinfo-tool-card"
+          href="https://ipapi.co/"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="ipinfo-tool-name">ipapi.co</div>
+          <div class="ipinfo-tool-desc">
+            老牌英文 IP 地理 API，免费、支持 CORS，适合轻量级前端集成。免费版每天 1000 次。
+          </div>
+        </a>
+        <a
+          class="ipinfo-tool-card"
+          href="https://www.iping.cc/"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="ipinfo-tool-name">iping.cc</div>
+          <div class="ipinfo-tool-desc">
+            中文 API，支持 IP 类型识别（原生IP/IDC/家庭宽带）、风险等级、ASN CIDR 展开、企业信息。
+          </div>
+        </a>
+        <a
+          class="ipinfo-tool-card"
+          href="https://ipure.dev/"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="ipinfo-tool-name">IPure</div>
+          <div class="ipinfo-tool-desc">
+            免费 IP 纯净度检测，0–100 分制，每一分的扣分依据与数据源完整透明，可嵌入 SVG Card。
+          </div>
+        </a>
+        <a
+          class="ipinfo-tool-card"
+          href="https://ping.pe/"
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="ipinfo-tool-name">ping.pe</div>
+          <div class="ipinfo-tool-desc">
+            170+ 节点全球多节点 Ping、MTR、TCP 端口测试、BGP Looking Glass、DNS 查询。
+          </div>
+        </a>
+      </div>
+    </section>
+  </Main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .ipinfo-ippure {
+    margin-top: 2rem;
+  }
+  .ipinfo-card-wrap {
+    display: flex;
+    justify-content: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    overflow: hidden;
+  }
+  .ipinfo-card-wrap img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+  .ipinfo-section {
+    margin-top: 1rem;
+  }
+  .ipinfo-panel {
+    margin-top: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .ipinfo-panel.hidden {
+    display: none;
+  }
+  .ipinfo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.25rem 2rem;
+    margin: 0;
+  }
+  .ipinfo-grid dt {
+    grid-column: 1;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    font-size: 0.85rem;
+  }
+  .ipinfo-grid dd {
+    grid-column: 2;
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    word-break: break-all;
+  }
+  @media (max-width: 640px) {
+    .ipinfo-grid {
+      grid-template-columns: 1fr;
+      gap: 0.15rem 0;
+    }
+    .ipinfo-grid dt {
+      grid-column: 1;
+    }
+    .ipinfo-grid dd {
+      grid-column: 1;
+      margin-bottom: 0.6rem;
+    }
+  }
+  .ipinfo-whois-input {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .ipinfo-input {
+    flex: 1 1 240px;
+    padding: 0.65rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 0.9rem;
+    font-family: var(--mono);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .ipinfo-input:focus {
+    border-color: var(--accent);
+  }
+  .ipinfo-iframe-wrap {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--background);
+  }
+  .ipinfo-iframe {
+    width: 100%;
+    height: 520px;
+    border: 0;
+  }
+  .ipinfo-tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+  }
+  .ipinfo-tool-card {
+    display: block;
+    padding: 1rem 1.1rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      transform 0.2s,
+      border-color 0.2s,
+      background 0.2s;
+  }
+  .ipinfo-tool-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    background: var(--accent/8);
+  }
+  .ipinfo-tool-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+    color: var(--foreground);
+  }
+  .ipinfo-tool-desc {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+    line-height: 1.5;
+  }
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  // ---------- 浏览器信息 ----------
+  const browserBtn = document.getElementById("btn-browser");
+  const browserPanel = document.getElementById("panel-browser");
+  const browserLabel = document.getElementById("btn-browser-label");
+  const browserLoading = document.getElementById("browser-loading");
+  const browserData = document.getElementById("browser-data");
+
+  browserBtn?.addEventListener("click", () => {
+    const hidden = browserPanel?.classList.contains("hidden");
+    if (hidden) {
+      browserPanel?.classList.remove("hidden");
+      browserPanel?.setAttribute("aria-hidden", "false");
+      browserLabel!.textContent = "收起浏览器信息";
+      browserBtn!.setAttribute("aria-expanded", "true");
+      if (browserData?.children.length === 0) collectBrowserInfo();
+    } else {
+      browserPanel?.classList.add("hidden");
+      browserPanel?.setAttribute("aria-hidden", "true");
+      browserLabel!.textContent = "查看浏览器信息";
+      browserBtn!.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  function collectBrowserInfo() {
+    if (!browserData || !browserLoading) return;
+
+    const items: [string, string][] = [];
+    const n = navigator;
+
+    items.push(["User Agent", n.userAgent]);
+    items.push(["浏览器", detectBrowser(n.userAgent)]);
+    items.push(["系统", detectOS(n.userAgent)]);
+    items.push(["平台", n.platform || "(未报告)"]);
+    items.push(["语言", n.languages?.join(", ") || n.language]);
+    items.push(["时区", Intl.DateTimeFormat().resolvedOptions().timeZone]);
+    items.push(["分辨率", `${screen.width} × ${screen.height}`]);
+    items.push(["可用区域", `${screen.availWidth} × ${screen.availHeight}`]);
+    items.push(["色深", `${screen.colorDepth} 位`]);
+    items.push(["设备像素比", String(window.devicePixelRatio)]);
+    items.push(["CPU 核心数", String(n.hardwareConcurrency || "未报告")]);
+    items.push(["内存（约）", (n as any).deviceMemory ? `${(n as any).deviceMemory} GB` : "未报告"]);
+    items.push(["Cookie 启用", n.cookieEnabled ? "是" : "否"]);
+    items.push(["Do Not Track", n.doNotTrack === "1" ? "开启" : n.doNotTrack === "0" ? "关闭" : "未设置"]);
+    items.push(["在线状态", n.onLine ? "在线" : "离线"]);
+    items.push(["屏幕方向", screen.orientation?.type || "(未报告)"]);
+
+    // Canvas 指纹（只返回哈希，不收集敏感数据）
+    try {
+      const fingerprint = canvasFingerprint();
+      items.push(["Canvas 指纹", fingerprint]);
+    } catch { /* ignore */ }
+
+    // WebGL 渲染器
+    try {
+      const gl = document.createElement("canvas").getContext("webgl");
+      if (gl) {
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+        if (debugInfo) {
+          items.push(["WebGL 渲染器", String(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL))]);
+          items.push(["WebGL 厂商", String(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL))]);
+        }
+      } else {
+        items.push(["WebGL", "不可用"]);
+      }
+    } catch {
+      items.push(["WebGL", "检测失败"]);
+    }
+
+    browserLoading.style.display = "none";
+    browserData.innerHTML = items
+      .map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>`)
+      .join("");
+  }
+
+  function detectBrowser(ua: string): string {
+    if (/Firefox/.test(ua)) return "Firefox";
+    if (/Edg\//.test(ua)) return "Edge";
+    if (/OPR\//.test(ua) || /Opera/.test(ua)) return "Opera";
+    if (/Chrome/.test(ua)) return "Chrome";
+    if (/Safari/.test(ua)) return "Safari";
+    return "未知";
+  }
+
+  function detectOS(ua: string): string {
+    if (/Windows NT 10\.0/.test(ua)) return "Windows 10/11";
+    if (/Windows NT 6\.3/.test(ua)) return "Windows 8.1";
+    if (/Windows NT 6\.1/.test(ua)) return "Windows 7";
+    if (/Windows/.test(ua)) return "Windows";
+    if (/Mac OS X 10_15|Mac OS X 10\.15/.test(ua)) return "macOS Catalina";
+    if (/Mac OS X/.test(ua)) return "macOS";
+    if (/Android/.test(ua)) return "Android";
+    if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+    if (/Linux/.test(ua)) return "Linux";
+    return "未知";
+  }
+
+  function canvasFingerprint(): string {
+    const canvas = document.createElement("canvas");
+    canvas.width = 200;
+    canvas.height = 50;
+    const ctx = canvas.getContext("2d")!;
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle = "#069";
+    ctx.fillText("Opccii IP Check", 2, 15);
+    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+    ctx.fillText("Opccii IP Check", 4, 17);
+    // 简单哈希
+    const data = canvas.toDataURL();
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash + data.charCodeAt(i)) | 0;
+    }
+    return "fp_" + Math.abs(hash).toString(36).padStart(8, "0");
+  }
+
+  // ---------- IP 详细查询 ----------
+  const ipBtn = document.getElementById("btn-ip");
+  const ipPanel = document.getElementById("panel-ip");
+  const ipLabel = document.getElementById("btn-ip-label");
+  const ipLoading = document.getElementById("ip-loading");
+  const ipData = document.getElementById("ip-data");
+
+  ipBtn?.addEventListener("click", async () => {
+    const hidden = ipPanel?.classList.contains("hidden");
+    if (hidden) {
+      ipPanel?.classList.remove("hidden");
+      ipPanel?.setAttribute("aria-hidden", "false");
+      ipLabel!.textContent = "重新查询";
+      ipBtn!.setAttribute("aria-expanded", "true");
+      if (ipData?.children.length === 0) await fetchIpInfo();
+    } else {
+      ipLabel!.textContent = "正在查询…";
+      await fetchIpInfo();
+    }
+  });
+
+  async function fetchIpInfo() {
+    if (!ipLoading || !ipData) return;
+    ipLoading.style.display = "block";
+    ipData.innerHTML = "";
+
+    // 第一步：拿到出口 IP
+    let ip: string;
+    try {
+      const r = await fetch("https://api.ipify.org?format=json");
+      ip = (await r.json()).ip;
+    } catch {
+      ipLoading.textContent = "无法获取出口 IP，请检查网络连接。";
+      return;
+    }
+
+    // 第二步：iping.cc 查询
+    try {
+      const r = await fetch(`https://api.iping.cc/v1/query?ip=${ip}&language=zh`);
+      const json = await r.json();
+      if (json.code !== 200 || !json.data) throw new Error("API 返回异常");
+      const d = json.data;
+
+      const items: [string, string][] = [
+        ["IP 地址", d.ip],
+        ["地理位置", [d.continent, d.country, d.region, d.city].filter(Boolean).join(" / ")],
+        ["经纬度", d.longitude && d.latitude ? `${d.latitude}, ${d.longitude}` : ""],
+        ["运营商 ISP", d.isp],
+        ["ASN", d.asn],
+        ["ASN 所有者", d.as_owner],
+        ["ASN 类型", d.as_type],
+        ["企业", d.company],
+        ["企业域名", d.company_domain],
+        ["IP 类型", d.type],
+        ["应用场景", d.usage_type],
+        ["是否代理", d.is_proxy],
+        ["风险评分", d.risk_score ? `${d.risk_score}%` : "未提供"],
+        ["风险标签", d.risk_tag || "无"],
+      ];
+
+      ipLoading.style.display = "none";
+      ipData.innerHTML = items
+        .filter(([, v]) => v)
+        .map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(String(v))}</dd>`)
+        .join("");
+    } catch (e: any) {
+      ipLoading.textContent = `查询失败：${e?.message || "未知错误"}`;
+    }
+  }
+
+  // ---------- WHOIS 查询 ----------
+  const whoisInput = document.getElementById("whois-input") as HTMLInputElement | null;
+  const whoisGo = document.getElementById("whois-go");
+  const whoisFrame = document.getElementById("whois-frame") as HTMLIFrameElement | null;
+  const whoisLink = document.getElementById("whois-link") as HTMLAnchorElement | null;
+
+  function doWhois() {
+    const q = whoisInput?.value.trim();
+    if (!q || !whoisFrame || !whoisLink) return;
+    whoisFrame.src = `https://who.ga/${encodeURIComponent(q)}`;
+    whoisLink.href = `https://who.ga/${encodeURIComponent(q)}`;
+    whoisLink.classList.remove("hidden");
+  }
+  whoisGo?.addEventListener("click", doWhois);
+  whoisInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doWhois();
+  });
+
+  // ---------- Ping 查询 ----------
+  const pingInput = document.getElementById("ping-input") as HTMLInputElement | null;
+  const pingGo = document.getElementById("ping-go");
+  const pingFrame = document.getElementById("ping-frame") as HTMLIFrameElement | null;
+  const pingLink = document.getElementById("ping-link") as HTMLAnchorElement | null;
+
+  function doPing() {
+    const q = pingInput?.value.trim();
+    if (!q || !pingFrame || !pingLink) return;
+    whoisLink; // no-op to avoid unused-var in some linters
+    pingFrame.src = `https://ping.pe/${encodeURIComponent(q)}`;
+    pingLink.href = `https://ping.pe/${encodeURIComponent(q)}`;
+    pingLink.classList.remove("hidden");
+  }
+  pingGo?.addEventListener("click", doPing);
+  pingInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doPing();
+  });
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+</script>

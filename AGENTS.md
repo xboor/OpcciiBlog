@@ -13,6 +13,7 @@
 | 你要做的事 | 读这个 |
 | --- | --- |
 | **写文章 / 改 frontmatter / 找图片怎么放** | [AGENTS/writing-guide.md](AGENTS/writing-guide.md) |
+| **零基础入门：环境、写作、改页面、Git 与发布** | [docs/beginner-writing-guide.md](docs/beginner-writing-guide.md) |
 | **改代码前确认哪些事不能做** | [AGENTS/constraints.md](AGENTS/constraints.md) |
 | 了解技术栈、目录结构、路由表、内容管线 | [AGENTS/architecture.md](AGENTS/architecture.md) |
 | 配环境变量、部署到 CF / Azure、发布流程 | [AGENTS/deployment.md](AGENTS/deployment.md) |

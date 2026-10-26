@@ -17,22 +17,33 @@
 /* Light theme values */
 :root,
 [data-theme="light"] {
-  --background: #fdfdfd;
-  --foreground: #282728;
-  --accent: #006cac;
+  --background: #f8f7f3;
+  --foreground: #252823;
+  --accent: #526447;
   --accent-foreground: #ffffff;
-  --muted: #e6e6e6;
-  --muted-foreground: #6b7280;
-  --border: #ece9e9;
+  --muted: #eceee6;
+  --muted-foreground: #686d63;
+  --border: #dfe2d8;
+  --surface: #ffffff;
+  --glass: rgb(255 255 252 / 78%);
+  --glass-border: rgb(255 255 255 / 90%);
+  --soft-shadow: 0 8px 32px rgb(39 48 31 / 6%);
+  --serif:
+    "Iowan Old Style", "Palatino Linotype", "Songti SC", "STSong",
+    "Noto Serif CJK SC", "SimSun", serif;
 }
 
 /* Dark theme values */
 [data-theme="dark"] {
-  --background: #212737;
-  --foreground: #eaedf3;
-  --accent: #ff6b01;
-  --accent-foreground: #ffffff;
-  --muted: #343f60;
-  --muted-foreground: #afb9ca;
-  --border: #ab4b08;
+  --background: #191d19;
+  --foreground: #e9ece2;
+  --accent: #bdcba5;
+  --accent-foreground: #1d2518;
+  --muted: #2c342b;
+  --muted-foreground: #a9b0a2;
+  --border: #353e32;
+  --surface: #222821;
+  --glass: rgb(32 38 31 / 82%);
+  --glass-border: rgb(196 209 183 / 13%);
+  --soft-shadow: 0 8px 32px rgb(0 0 0 / 18%);
 }

@@ -5,7 +5,7 @@ export default defineAstroPaperConfig({
     // 主域名（Cloudflare）。这里是全站 canonical / RSS / sitemap 的唯一来源，
     // 备用站（Azure，backup.opccii.com）部署时 canonical 仍指向该域名。
     url: "https://opccii.com/",
-    title: "Opccii 的博客",
+    title: "xboor的小屋",
     description: "记录技术、数学与生活的个人博客。",
     author: "Opccii",
     profile: "",

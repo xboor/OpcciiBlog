@@ -8,20 +8,17 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Socials from "@/components/Socials.astro";
 import Card from "@/components/Card.astro";
-import LinkButton from "@/components/LinkButton.astro";
 import { getSortedPosts } from "@/utils/getSortedPosts";
+import { getUniqueTags } from "@/utils/getUniqueTags";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
-const { socials, posts: postsConfig } = config;
-
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
-
-const posts = await getCollection("posts");
-const sortedPosts = getSortedPosts(posts);
+const sortedPosts = getSortedPosts(await getCollection("posts"));
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
 const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+const tags = getUniqueTags(sortedPosts).slice(0, 6);
 const homePath = getRelativeLocaleUrl(locale, "");
 ---
 
@@ -31,68 +28,59 @@ const homePath = getRelativeLocaleUrl(locale, "");
     id="main-content"
     data-layout="index"
     data-home-path={homePath}
-    class="app-layout my-1"
+    class="app-layout home-layout"
   >
-    <section id="hero" class="border-border border-b pt-8 pb-6">
-      <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
-        Mingalaba
-      </h1>
-      <a
-        target="_blank"
-        href={`${import.meta.env.BASE_URL.replace(/\/?$/, "/")}rss.xml`}
-        class="inline-block"
-        aria-label="RSS Feed"
-        title="RSS Feed"
-      >
-        <IconRss
-          width={20}
-          height={20}
-          class="stroke-accent scale-125 stroke-3 rtl:-rotate-90"
-        />
-        <span class="sr-only">RSS Feed</span>
-      </a>
-
-      <p>
-        AstroPaper is a minimal, responsive, accessible and SEO-friendly Astro
-        blog theme. This theme follows best practices and provides accessibility
-        out of the box. Light and dark mode are supported by default. Moreover,
-        additional color schemes can also be configured.
-      </p>
-      <p class="mt-2">
-        Read the blog posts or check{" "}
-        <LinkButton
-          class="hover:text-accent underline decoration-dashed underline-offset-4"
-          href="https://github.com/satnaing/astro-paper#readme"
+    <section id="hero" class="home-hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">
+          <span class="status-dot" aria-hidden="true"></span>{t.home.eyebrow}
+        </p>
+        <h1 id="hero-title">
+          {t.home.headline}<br /><span>{t.home.headlineAccent}</span>
+        </h1>
+        <p class="hero-intro">{t.home.intro}</p>
+        <div class="hero-actions">
+          <a class="button-primary" href="#writing"
+            >{t.home.startReading}<IconArrowRight aria-hidden="true" /></a
+          >
+          <a class="quiet-link" href={getRelativeLocaleUrl(locale, "about")}
+            >{t.nav.about}<span aria-hidden="true"> ↗</span></a
+          >
+        </div>
+        <div class="hero-socials">
+          <Socials />
+          <span class="social-divider" aria-hidden="true"></span>
+          <a
+            href={`${import.meta.env.BASE_URL.replace(/\/?$/, "/")}rss.xml`}
+            class="rss-link"><IconRss aria-hidden="true" />RSS</a
+          >
+          <span class="social-divider" aria-hidden="true"></span>
+          <a
+            href="https://backup.opccii.com"
+            class="mirror-link"
+            title={t.home.mirrorHint}>{t.home.mirrorLink}</a
+          >
+        </div>
+      </div>
+      <aside class="hero-note">
+        <span class="note-index" aria-hidden="true">01 / ∞</span>
+        <p>{t.home.spaceNote}</p>
+        <a href={getRelativeLocaleUrl(locale, "about")}
+          >{t.home.aboutSpace}<IconArrowRight aria-hidden="true" /></a
         >
-          README
-        </LinkButton>{" "}
-        for more info.
-      </p>
-      {
-        socials.length > 0 && (
-          <div class="mt-4 flex max-sm:flex-col sm:items-center">
-            <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">
-              {t.home.socialLinks}:
-            </div>
-            <Socials />
-          </div>
-        )
-      }
+      </aside>
     </section>
 
+    <div id="writing" class="writing-heading">
+      <div><p class="eyebrow">JOURNAL</p><h2>{t.home.writing}</h2></div>
+      <a class="quiet-link" href={getRelativeLocaleUrl(locale, "posts")}
+        >{t.home.allPosts}<IconArrowRight aria-hidden="true" /></a
+      >
+    </div>
     {
       featuredPosts.length > 0 && (
-        <section
-          id="featured"
-          class:list={[
-            "pt-12 pb-6",
-            { "border-border border-b": recentPosts.length > 0 },
-          ]}
-        >
-          <h2 class="text-2xl font-semibold tracking-wide">
-            {t.home.featured}
-          </h2>
-          <ul>
+        <section id="featured" aria-label={t.home.featured}>
+          <ul class="home-posts">
             {featuredPosts.map(data => (
               <Card variant="h3" {...data} />
             ))}
@@ -100,39 +88,48 @@ const homePath = getRelativeLocaleUrl(locale, "");
         </section>
       )
     }
-
     {
       recentPosts.length > 0 && (
-        <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">
-            {t.home.recentPosts}
-          </h2>
-          <ul>
-            {recentPosts.slice(0, postsConfig.perIndex).map(data => (
+        <section id="recent-posts" aria-label={t.home.recentPosts}>
+          <ul class="home-posts">
+            {recentPosts.slice(0, config.posts.perIndex).map(data => (
               <Card variant="h3" {...data} />
             ))}
           </ul>
         </section>
       )
     }
-
-    <div class="my-8 text-center">
-      <LinkButton href={getRelativeLocaleUrl(locale, "posts")}>
-        {t.home.allPosts}
-        <IconArrowRight class="inline-block rtl:-rotate-180" />
-      </LinkButton>
-    </div>
+    {
+      tags.length > 0 && (
+        <section class="topic-section" aria-labelledby="topic-heading">
+          <h2 id="topic-heading">{t.home.topics}</h2>
+          <ul class="topic-list">
+            {tags.map(({ tag, tagName }) => (
+              <li>
+                <a href={getRelativeLocaleUrl(locale, `tags/${tag}/`)}>
+                  <span aria-hidden="true">#</span>
+                  {tagName}
+                  <IconArrowRight aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
   </main>
   <Footer />
 </Layout>
 
 <script>
   document.addEventListener("astro:page-load", () => {
-    const indexLayout = (document.querySelector("#main-content") as HTMLElement)
-      ?.dataset;
-    const baseRoot = import.meta.env.BASE_URL.replace(/\/?$/, "/");
-    if (indexLayout?.layout) {
-      sessionStorage.setItem("backUrl", indexLayout.homePath ?? baseRoot);
-    }
+    const indexLayout = document.querySelector<HTMLElement>(
+      "[data-layout='index']"
+    )?.dataset;
+    if (indexLayout)
+      sessionStorage.setItem(
+        "backUrl",
+        indexLayout.homePath ?? import.meta.env.BASE_URL
+      );
   });
 </script>

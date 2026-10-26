@@ -1,0 +1,524 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import navData from "@/data/nav.json";
+import NavSiteCard from "@/components/NavSiteCard.astro";
+
+type Site = { name: string; url: string; icon?: string; desc?: string; pinned?: boolean };
+type Group = { name: string; sites: Site[] };
+type Theme = { name: string; description?: string; children: Group[] };
+
+const themes = (navData as { themes: Theme[] }).themes;
+
+const themeCount = (theme: Theme) =>
+  theme.children.reduce((sum, group) => sum + group.sites.length, 0);
+
+const pinnedSites = themes
+  .flatMap(theme => theme.children.flatMap(group => group.sites))
+  .filter(site => site.pinned);
+
+const totalSites = themes.reduce((sum, theme) => sum + themeCount(theme), 0);
+---
+
+<Layout
+  title={`导航 | ${config.site.title}`}
+  description="常用的开发工具与网站导航，支持即时搜索与分类跳转。"
+>
+  <Header />
+  <Breadcrumb />
+
+  <Main
+    pageTitle="导航"
+    pageDesc={`收录 ${totalSites} 个常用站点，支持即时搜索与图标 / 列表两种视图。`}
+    class="nav-page"
+  >
+    <div class="nav-bar" role="region" aria-label="导航工具条">
+      <div class="nav-search">
+        <input
+          id="nav-search-input"
+          type="search"
+          placeholder="搜索站点，按 / 聚焦"
+          aria-label="搜索站点"
+          autocomplete="off"
+        />
+      </div>
+      <nav class="nav-tabs" aria-label="分类导航">
+        <ol class="nav-tabs-list">
+          {
+            pinnedSites.length > 0 && (
+              <li>
+                <a href="#nav-pin" data-rail-link>
+                  置顶
+                  <span class="nav-tab-count">{pinnedSites.length}</span>
+                </a>
+              </li>
+            )
+          }
+          {
+            themes.map((theme, i) => (
+              <li>
+                <a href={`#nav-${i}`} data-rail-link>
+                  {theme.name}
+                  <span class="nav-tab-count">{themeCount(theme)}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+      <div class="nav-view-toggle" role="group" aria-label="视图切换">
+        <button
+          type="button"
+          data-view-btn="icons"
+          aria-pressed="true"
+          title="图标视图"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            aria-hidden="true"
+          >
+            <rect x="3" y="3" width="6" height="6" rx="1.5"></rect>
+            <rect x="11" y="3" width="6" height="6" rx="1.5"></rect>
+            <rect x="3" y="11" width="6" height="6" rx="1.5"></rect>
+            <rect x="11" y="11" width="6" height="6" rx="1.5"></rect>
+          </svg>
+          <span class="sr-only">图标视图</span>
+        </button>
+        <button
+          type="button"
+          data-view-btn="list"
+          aria-pressed="false"
+          title="列表视图"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M3 5h14M3 10h14M3 15h14"></path>
+          </svg>
+          <span class="sr-only">列表视图</span>
+        </button>
+      </div>
+    </div>
+
+    <p id="nav-result" class="nav-result" role="status" hidden></p>
+
+    <div class="nav-content" data-view="icons">
+      {
+        pinnedSites.length > 0 && (
+          <section class="nav-theme" id="nav-pin" data-nav-theme>
+            <header class="nav-theme-head">
+              <h2>置顶</h2>
+              <p>最常用的几个站点</p>
+            </header>
+            <div class="nav-group" data-nav-group>
+              <div class="nav-grid">
+                {pinnedSites.map(site => (
+                  <NavSiteCard site={site} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      }
+      {
+        themes.map((theme, i) => (
+          <section class="nav-theme" id={`nav-${i}`} data-nav-theme>
+            <header class="nav-theme-head">
+              <h2>{theme.name}</h2>
+              {theme.description && <p>{theme.description}</p>}
+            </header>
+            {theme.children.map(group => (
+              <div class="nav-group" data-nav-group>
+                <h3>{group.name}</h3>
+                <div class="nav-grid">
+                  {group.sites.map(site => (
+                    <NavSiteCard site={site} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        ))
+      }
+    </div>
+  </Main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .nav-page {
+    max-width: 1100px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* 顶部工具条：搜索 + 分类 tabs + 视图切换 */
+  .nav-bar {
+    position: sticky;
+    top: 102px;
+    z-index: 6;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    background: var(--glass);
+    box-shadow: var(--soft-shadow);
+  }
+  @supports (backdrop-filter: blur(20px)) {
+    .nav-bar {
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      backdrop-filter: blur(20px) saturate(140%);
+    }
+  }
+  .nav-search {
+    flex: 1 1 180px;
+    max-width: 320px;
+    min-width: 150px;
+  }
+  .nav-search input {
+    width: 100%;
+    padding: 7px 15px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: var(--surface);
+    color: var(--foreground);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s;
+  }
+  .nav-search input:focus {
+    border-color: var(--accent);
+  }
+  .nav-search input::placeholder {
+    color: var(--muted-foreground);
+  }
+  .nav-tabs {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .nav-tabs-list {
+    display: flex;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs-list::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-tabs-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 13px;
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background 0.18s,
+      color 0.18s;
+  }
+  .nav-tabs-list a:hover,
+  .nav-tabs-list a[aria-current="true"] {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+  .nav-tab-count {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .nav-view-toggle {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: var(--surface);
+  }
+  .nav-view-toggle button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: var(--muted-foreground);
+    transition:
+      background 0.18s,
+      color 0.18s;
+  }
+  .nav-view-toggle button:hover {
+    color: var(--foreground);
+  }
+  .nav-view-toggle button[aria-pressed="true"] {
+    background: var(--foreground);
+    color: var(--background);
+  }
+  .nav-view-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+  .nav-result {
+    margin: 14px 2px 0;
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+
+  /* 内容区 */
+  .nav-content {
+    margin-top: 6px;
+  }
+  .nav-content[data-view="icons"] .nav-theme-head p {
+    display: none;
+  }
+  .nav-theme {
+    padding: 26px 0 30px;
+    border-top: 1px solid var(--border);
+    scroll-margin-top: 180px;
+  }
+  .nav-theme:first-child {
+    padding-top: 14px;
+    border-top: 0;
+  }
+  .nav-theme-head {
+    margin-bottom: 20px;
+  }
+  .nav-theme-head h2 {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .nav-theme-head p {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--muted-foreground);
+  }
+  .nav-group + .nav-group {
+    margin-top: 26px;
+  }
+  .nav-group h3 {
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 550;
+    color: var(--muted-foreground);
+  }
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .nav-bar {
+      top: 88px;
+      border-radius: 18px;
+    }
+    .nav-search {
+      flex: 1 1 auto;
+      max-width: none;
+    }
+    .nav-tabs {
+      flex-basis: 100%;
+      order: 3;
+      justify-content: flex-start;
+    }
+    .nav-theme {
+      scroll-margin-top: 230px;
+    }
+  }
+</style>
+
+<script>
+  function applyFilter() {
+    const input = document.getElementById(
+      "nav-search-input"
+    ) as HTMLInputElement | null;
+    const resultEl = document.getElementById("nav-result");
+    if (!input) return;
+    const q = input.value.trim().toLowerCase();
+    const cards = document.querySelectorAll<HTMLElement>(".nav-site");
+    let visible = 0;
+    for (const card of cards) {
+      const show = !q || (card.dataset.search ?? "").includes(q);
+      card.hidden = !show;
+      if (show) visible++;
+    }
+    document.querySelectorAll<HTMLElement>("[data-nav-group]").forEach(g => {
+      g.hidden = !g.querySelector(".nav-site:not([hidden])");
+    });
+    document.querySelectorAll<HTMLElement>("[data-nav-theme]").forEach(t => {
+      t.hidden = !t.querySelector("[data-nav-group]:not([hidden])");
+    });
+    if (resultEl) {
+      if (q) {
+        resultEl.textContent = visible
+          ? `找到 ${visible} 个站点`
+          : "没有匹配的站点，换个关键词试试";
+        resultEl.hidden = false;
+      } else {
+        resultEl.hidden = true;
+      }
+    }
+  }
+
+  // 视图切换：图标 / 列表，localStorage 记忆
+  function applyView() {
+    const content = document.querySelector<HTMLElement>(".nav-content");
+    if (!content) return;
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem("nav-view");
+    } catch {
+      /* ignore */
+    }
+    const view = stored === "list" ? "list" : "icons";
+    content.dataset.view = view;
+    document.querySelectorAll<HTMLButtonElement>("[data-view-btn]").forEach(
+      b => {
+        b.setAttribute("aria-pressed", String(b.dataset.viewBtn === view));
+      }
+    );
+  }
+
+  document.addEventListener("click", event => {
+    const btn = (event.target as HTMLElement).closest?.(
+      "[data-view-btn]"
+    ) as HTMLButtonElement | null;
+    if (!btn) return;
+    const view = btn.dataset.viewBtn === "list" ? "list" : "icons";
+    try {
+      localStorage.setItem("nav-view", view);
+    } catch {
+      /* ignore */
+    }
+    applyView();
+  });
+
+  // 全局快捷键：/ 聚焦搜索，Esc 清空
+  document.addEventListener("keydown", event => {
+    const input = document.getElementById(
+      "nav-search-input"
+    ) as HTMLInputElement | null;
+    if (!input) return;
+    if (event.key === "Escape" && document.activeElement === input) {
+      input.value = "";
+      applyFilter();
+      input.blur();
+      return;
+    }
+    if (
+      event.key === "/" &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey
+    ) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      )
+        return;
+      event.preventDefault();
+      input.focus();
+    }
+  });
+
+  document.addEventListener("input", event => {
+    if ((event.target as HTMLElement).id === "nav-search-input") applyFilter();
+  });
+
+  // favicon 加载失败时回退为首字母色块
+  document.addEventListener(
+    "error",
+    event => {
+      const img = event.target as HTMLElement;
+      if (
+        !(img instanceof HTMLImageElement) ||
+        !img.classList.contains("nav-site-icon")
+      )
+        return;
+      const name =
+        img
+          .closest(".nav-site")
+          ?.querySelector(".nav-site-name")
+          ?.textContent?.trim() ?? "";
+      const avatar = document.createElement("span");
+      avatar.className = "nav-site-avatar";
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = (name[0] ?? "•").toUpperCase();
+      img.replaceWith(avatar);
+    },
+    true
+  );
+
+  // 滚动时高亮当前分类 tab
+  function updateActiveTab() {
+    const links = document.querySelectorAll<HTMLAnchorElement>(
+      "[data-rail-link]"
+    );
+    const sections = document.querySelectorAll<HTMLElement>(
+      "[data-nav-theme]"
+    );
+    if (!links.length || !sections.length) return;
+    const offset = 300;
+    let current = sections[0].id;
+    for (const section of sections) {
+      if (section.offsetTop <= window.scrollY + offset) current = section.id;
+    }
+    if (
+      window.innerHeight + window.scrollY >=
+      document.documentElement.scrollHeight - 40
+    ) {
+      current = sections[sections.length - 1].id;
+    }
+    links.forEach(a => {
+      const id = a.getAttribute("href")?.slice(1);
+      if (id === current) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  window.addEventListener("scroll", updateActiveTab, { passive: true });
+  window.addEventListener("resize", updateActiveTab, { passive: true });
+
+  function initNav() {
+    if (!document.querySelector(".nav-content")) return;
+    applyView();
+    updateActiveTab();
+  }
+  initNav();
+  document.addEventListener("astro:after-swap", initNav);
+</script>

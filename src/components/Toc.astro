@@ -1,0 +1,178 @@
+---
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+type Heading = { depth: number; slug: string; text: string };
+
+const { headings } = Astro.props as { headings: Heading[] };
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
+
+const toc = headings.filter(h => h.depth === 2 || h.depth === 3);
+---
+
+{
+  toc.length > 0 && (
+    <nav aria-label={t.post.toc}>
+      {/* 窄屏：折叠目录 */}
+      <details class="toc-mobile">
+        <summary>{t.post.toc}</summary>
+        <ul>
+          {toc.map(h => (
+            <li class:list={[`toc-depth-${h.depth}`]}>
+              <a href={`#${h.slug}`}>{h.text}</a>
+            </li>
+          ))}
+        </ul>
+      </details>
+
+      {/* 宽屏：右侧固定侧栏 */}
+      <div class="toc-desktop">
+        <p class="toc-title">{t.post.toc}</p>
+        <ul>
+          {toc.map(h => (
+            <li class:list={[`toc-depth-${h.depth}`]}>
+              <a href={`#${h.slug}`}>{h.text}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </nav>
+  )
+}
+
+<style>
+  /* 窄屏折叠目录 */
+  .toc-mobile {
+    display: block;
+    margin: 20px 0 0;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    font-size: 14px;
+  }
+  .toc-mobile summary {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 550;
+    color: var(--foreground);
+  }
+  .toc-mobile ul {
+    margin: 0;
+    padding: 2px 16px 12px;
+    list-style: none;
+  }
+  .toc-mobile li a {
+    display: block;
+    padding: 4px 0;
+    color: var(--muted-foreground);
+    text-decoration: none;
+  }
+  .toc-mobile li a:hover {
+    color: var(--foreground);
+  }
+  .toc-mobile li.toc-depth-3 a {
+    padding-left: 14px;
+  }
+
+  /* 宽屏右侧固定侧栏 */
+  .toc-desktop {
+    display: none;
+    position: fixed;
+    top: 132px;
+    left: calc(50% + 420px);
+    width: 240px;
+    max-height: calc(100dvh - 200px);
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    scrollbar-width: thin;
+  }
+  @media (min-width: 1380px) {
+    .toc-desktop {
+      display: block;
+    }
+    .toc-mobile {
+      display: none;
+    }
+  }
+  .toc-title {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 550;
+    color: var(--muted-foreground);
+  }
+  .toc-desktop ul {
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    border-left: 1px solid var(--border);
+  }
+  .toc-desktop li a {
+    display: block;
+    padding: 3px 0 3px 14px;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition:
+      color 0.18s,
+      border-color 0.18s;
+  }
+  .toc-desktop li.toc-depth-3 a {
+    padding-left: 26px;
+  }
+  .toc-desktop li a:hover {
+    color: var(--foreground);
+  }
+  .toc-desktop li a.toc-active {
+    border-left-color: var(--accent);
+    color: var(--accent);
+  }
+</style>
+
+<script>
+  function initToc() {
+    const links = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>(
+        ".toc-desktop a, .toc-mobile a"
+      )
+    );
+    if (!links.length) return;
+    const ids = [...new Set(links.map(a => (a.getAttribute("href") ?? "").slice(1)))];
+    const headingEls = ids
+      .map(id => document.getElementById(id))
+      .filter((el): el is HTMLElement => !!el);
+    if (!headingEls.length) return;
+
+    function update() {
+      // 当前标题：视口顶部偏移量之上最近的标题
+      const offset = 170;
+      let current = headingEls[0].id;
+      for (const heading of headingEls) {
+        if (heading.getBoundingClientRect().top <= offset) current = heading.id;
+      }
+      // 滚动到底时高亮最后一项
+      if (
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 60
+      ) {
+        current = headingEls[headingEls.length - 1].id;
+      }
+      for (const link of links) {
+        link.classList.toggle(
+          "toc-active",
+          link.getAttribute("href") === `#${current}`
+        );
+      }
+    }
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+  }
+
+  initToc();
+  document.addEventListener("astro:after-swap", initToc);
+</script>

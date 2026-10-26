@@ -9,12 +9,20 @@ type Props = {
   canonicalURL?: string;
   pubDatetime?: Date;
   modDatetime?: Date | null;
+  rawMarkdownUrl?: string;
 };
 
 const { site } = config;
 
-const { title, description, ogImage, canonicalURL, pubDatetime, modDatetime } =
-  Astro.props;
+const {
+  title,
+  description,
+  ogImage,
+  canonicalURL,
+  pubDatetime,
+  modDatetime,
+  rawMarkdownUrl,
+} = Astro.props;
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -51,6 +59,17 @@ const structuredData = {
         <meta
           property="article:modified_time"
           content={modDatetime.toISOString()}
+        />
+      )
+    }
+
+    {
+      rawMarkdownUrl && (
+        <link
+          rel="alternate"
+          type="text/markdown"
+          title="Markdown source"
+          href={rawMarkdownUrl}
         />
       )
     }

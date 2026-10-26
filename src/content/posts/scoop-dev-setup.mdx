@@ -1,0 +1,553 @@
+---
+title: "用 Scoop 搭建 Windows 开发环境"
+description: "基于 Scoop 的 Windows 开发环境搭建指南：安装与配置 Scoop、Git/SSH/GPG、终端与 Shell 美化、VS Code、主流语言工具链与常用开发工具，全部配置好国内镜像。"
+pubDatetime: 2026-10-26T20:00:00+08:00
+tags: ["Windows", "包管理器", "开发环境"]
+---
+
+> [!NOTE]
+> 本文整理自潇然工作室的《[Scoop 搭建 Windows 开发环境](https://www.xrgzs.top/posts/scoop-dev-setup)》（CC BY-NC-SA 4.0），
+> 保留了 Scoop 的介绍与核心安装指导，删去了过时与不常用的部分，只留我个人推荐的项目，
+> 并补充了常用命令速查。命令均在 PowerShell 中执行。
+
+Scoop 是一个 Windows 下基于 PowerShell 编写的第三方包管理器，能够自动下载、解压、设置环境变量、添加 shim、持久化用户数据。
+本文将使用 Scoop 来安装一些工具，简化开发环境搭建，让重装系统后可以更快配置环境。
+本文提供的方法非特别说明无需特殊网络环境即可直接下载安装，并配置好国内镜像。
+
+## 安装 Scoop
+
+国内环境推荐使用[潇然工作室的特别版 Scoop](https://github.com/xrgzs/scoop)，加入了自动切换镜像的特性。
+如果你能顺畅访问 GitHub，也可以用原版脚本。
+
+打开 PowerShell（**无需管理员权限**），执行以下命令安装：
+
+```powershell
+# 特别版（国内推荐，自动换源 + 创建桌面快捷方式）
+irm c.xrgzs.top/c/scoop | iex
+
+# 或原版
+irm get.scoop.sh | iex
+```
+
+执行完后，电脑中已装好 Git for Windows、7-Zip、Aria2、Gsudo，并添加了常用的仓库。
+
+> [!TIP]
+> Scoop 安装的软件默认不会创建桌面快捷方式，可以在开始菜单的
+> `Scoop Apps` 文件夹（`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Scoop Apps`）中找到，
+> 拖到桌面即可。
+
+日常更新与维护：
+
+```powershell
+scoop update        # 更新 Scoop 自身与 bucket
+scoop update *      # 更新所有已安装软件
+scoop status        # 查看哪些软件有新版本
+scoop cleanup *     # 清理旧版本，释放空间
+scoop hold <软件名>  # 锁定某个软件不参与升级
+```
+
+## 配置 Git
+
+Scoop 安装 Scoop 时已经装好 Git，只需配置身份信息。
+需要准备一个邮箱，并绑定到 GitHub / Gitee 等代码托管平台：
+
+```powershell
+git config --global user.name "Your Name"
+git config --global user.email "youremail@example.com"
+
+# 记住密码，避免每次输入（推荐 Git Credential Manager）
+git config --global credential.helper manager
+
+# 默认编辑器改为 VS Code（装好 VS Code 后执行）
+git config --global core.editor "code --wait"
+
+# 查看配置
+git config --list
+```
+
+使用 GitHub 的话，装官方 `gh` CLI 可以自动完成认证与 Git 凭据对接：
+
+```powershell
+scoop install gh
+gh auth login
+gh auth setup-git
+```
+
+## 配置 SSH 推拉代码
+
+生成密钥（回车确认路径，密码可留空）：
+
+```powershell
+ssh-keygen -t ed25519
+```
+
+密钥存放在 `%USERPROFILE%\.ssh` 目录，`id_ed25519` 为私钥，`id_ed25519.pub` 为公钥。
+把公钥内容复制到 GitHub / Gitee 的 SSH Keys 设置里：
+
+```powershell
+cat .ssh/id_ed25519.pub
+```
+
+> [!TIP]
+> 把公钥追加到服务器的 `~/.ssh/authorized_keys`，还可以实现 SSH 免密登录服务器。
+
+## 配置 GPG 签名
+
+部分平台要求强制 `Verified` 标识，需要配置 GPG 签名。
+
+```powershell
+# 生成密钥（按提示输入用户名、邮箱、私钥密码）
+gpg --full-generate-key
+
+# 查看密钥 ID
+gpg --list-secret-keys --keyid-format=long
+
+# 导出公钥（复制输出内容到平台的 GPG 设置）
+gpg --armor --export {key_id}
+
+# 配置 Git 默认签名
+git config --global user.signingkey {key_id}
+git config --global commit.gpgsign true
+git config --global tag.gpgSign true
+```
+
+配置完成后每次 commit 都会自动签名，网页端显示 `Verified`。
+
+备份与吊销：
+
+```powershell
+# 导出公钥与私钥（私钥切勿丢失或外泄）
+gpg --armor --export > mygpg.pub
+gpg --armor --export-secret-key > mygpg.sec
+
+# 生成吊销证书，密钥泄露时用于作废
+gpg --armor --gen-revoke > mygpg.rev
+```
+
+> [!TIP]
+> （可选）安装 [Gpg4win](https://www.gpg4win.org/) 可以获得图形化的 Kleopatra 密钥管理器和更好看的密码输入框：
+> `scoop install extras/gpg4win`。
+> 注意其默认配置目录是 `%APPDATA%\gnupg`，与 Git 的 `~\.gnupg` 不同，
+> 需要执行 `Set-ItemProperty -Path "HKCU:\Software\GNU\GnuPG" -Name 'HomeDir' -Value "$env:USERPROFILE\.gnupg" -Type String -Force` 统一。
+
+## 配置终端
+
+### Windows Terminal
+
+Windows 11 已默认自带；Windows 10 建议从[微软商店](https://aka.ms/terminal)安装并设为默认终端。
+**不要用系统自带的 conhost.exe**，体验差太多。
+
+推荐手动调整几项设置（设置界面或 `settings.json`）：
+
+- 启动居中（`centerOnLaunch`）
+- 亚克力透明：透明度 90 + `useAcrylic`
+- 配色方案：One Half Dark
+- 字体：Cascadia Code NF（见下）
+
+添加 Git Bash 配置文件（设置 → 添加新配置文件 → 新建空配置文件，命令行填）：
+
+```powershell
+"(scoop prefix git)\bin\bash.exe" -i -l
+```
+
+### 安装 Nerd Font
+
+避免终端图标显示为方块，推荐 Cascadia Code：
+
+```powershell
+scoop install nerd-fonts/Cascadia-Code
+```
+
+装完重启 Windows Terminal 生效，再把字体设为 `Cascadia Code NF`。
+
+### 升级到 PowerShell Core
+
+Windows 自带的 PowerShell 5.1 速度慢、功能少，建议升级到跨平台的 PowerShell Core：
+
+```powershell
+scoop install gsudo
+gsudo scoop install sdoog/pwsh-np
+```
+
+装完后在 Windows Terminal 中把默认配置文件改为 PowerShell（pwsh），重启终端。
+
+## 配置 Shell
+
+> [!WARNING]
+> 加了美化和插件会拖慢 PowerShell 启动，如果启动超过 1 秒，
+> 优先删减美化与插件，保证效率。
+
+编辑配置文件：
+
+```powershell
+# 确保配置文件存在
+if (-not (Test-Path -Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force }
+notepad $PROFILE
+```
+
+### PSCompletions（Tab 补全）
+
+补全管理器，带来更出色的 Tab 补全体验，支持中文提示：
+
+- 官网：[PSCompletions](https://pscompletions.abgox.com/zh-cn)
+- 仓库：[abgox/PSCompletions](https://github.com/abgox/PSCompletions)
+
+```powershell
+scoop install extras/pscompletions
+
+# 写入配置文件
+Add-Content $PROFILE "`nImport-Module PSCompletions"
+. $PROFILE
+
+# 安装全部补全规则
+psc add *
+```
+
+用法：`Tab` 弹出补全窗口，`F2` 切换竖屏预测模式。
+
+### Carapace（补全库）
+
+以二进制形式提供的多 Shell 补全库，与 PSCompletions 互补：
+
+- 官网：[carapace.sh](https://carapace.sh/)
+- 仓库：[carapace-sh/carapace-bin](https://github.com/carapace-sh/carapace-bin)
+
+```powershell
+scoop install extras/carapace-bin
+Add-Content $PROFILE "`n`$env:CARAPACE_TOOLTIP = 1`ncarapace _carapace | Out-String | Invoke-Expression"
+```
+
+### Starship（提示符美化）
+
+跨 Shell 的提示符，显示 Git 状态、执行状态等信息：
+
+- 官网：[starship.rs](https://starship.rs/zh-cn/)
+
+```powershell
+scoop install starship
+Add-Content $PROFILE "`nInvoke-Expression (&starship init powershell)"
+starship preset plain-text-symbols > ~\.config\starship.toml
+```
+
+> [!NOTE]
+> 类似工具还有 [Oh My Posh](https://ohmyposh.dev/)，主题更多，二选一即可，不建议同时用。
+> posh-git、argc-completions、Scoop Completion 等老牌模块长期未更新且拖慢启动，不建议安装。
+
+### 实用别名
+
+追加到 `$PROFILE`，让 PowerShell 顺手一些：
+
+```powershell
+# Customized alias
+Set-Alias -Name which -Value Get-Command
+Set-Alias -Name zip -Value Compress-Archive
+Set-Alias -Name unzip -Value Expand-Archive
+function .. { cd .. }
+function wget { aria2c -c -R --retry-wait=5 -x16 -s16 -j16 -k1M $args }
+```
+
+## CMD 增强（可选）
+
+依然习惯 CMD 的话，装 [Clink](https://chrisant996.github.io/clink/clink.html) 补齐行编辑与补全体验：
+
+```powershell
+scoop install clink clink-completions
+clink autorun install
+clink set clink.autoupdate off   # 更新交给 Scoop
+```
+
+再装 BusyBox 补一些 Linux 命令（`ls`、`cat`、`grep` 等）。
+注意它可能覆盖已装的 shims，建议尽早安装，被覆盖时用 `scoop reset git` 恢复。
+需要更完整的 Coreutils 推荐 Rust 实现的 `uutils-coreutils`（Ubuntu 同款）：
+
+```powershell
+scoop install busybox uutils-coreutils
+```
+
+## 必装效率工具
+
+以下工具几乎在所有场景都用得上（AI Agent 也依赖其中一部分）：
+
+```powershell
+scoop install jq yq ripgrep fzf fd ast-grep aria2
+```
+
+## 安装 AI Agent
+
+```powershell
+# 各家 Agent 的 API Key 配置切换器
+scoop install extras/cc-switch
+
+# Claude Code（官方脚本对国内不友好，走 Scoop 从 GitHub 仓库安装）
+scoop install sdoog/claude-code
+
+# Codex CLI / OpenCode
+scoop install codex opencode
+```
+
+OpenClaw 等 NodeJS 系 Agent 需要先按后文配置好 Node.js 环境：
+
+```powershell
+npm i -g openclaw
+openclaw onboard
+```
+
+[Vercel Skills](https://www.skills.sh/)（`npx skills`）可以给 Claude Code、Cursor 等 27+ 工具一键安装技能包，
+同样依赖 Node.js。无法访问 GitHub 时，可在
+`https://github.com`、`https://raw.githubusercontent.com` 前加 `https://gh-proxy.com/` 前缀。
+
+## 配置 Visual Studio Code
+
+注意区分 Visual Studio（VS，紫色图标，重型 IDE）与 Visual Studio Code（VSC，蓝色图标，编辑器）。
+不做 Windows C/C++、C# 开发，装后者就够了。建议从[官网](https://code.visualstudio.com/)安装以获得自动更新，
+也可以用 Scoop：
+
+```powershell
+scoop install vscode
+# 执行文件关联
+reg import "$(scoop prefix vscode)\install-context.reg"
+reg import "$(scoop prefix vscode)\install-associations.reg"
+```
+
+Scoop 安装的话建议关闭自动更新（设置 JSON 中）：
+
+```json
+"update.mode": "none",
+"update.enableWindowsBackgroundUpdates": false
+```
+
+中文默认字体回退是宋体，比较刺眼，改成编程字体 + 微软雅黑：
+
+```json
+"editor.fontFamily": "'Cascadia Code', 'Microsoft YaHei UI', monospace"
+```
+
+必装扩展（`code --install-extension <ID>`）：
+
+| 扩展 | 用途 | ID |
+| --- | --- | --- |
+| 简体中文语言包 | 中文界面 | `MS-CEINTL.vscode-language-pack-zh-hans` |
+| Python | Python 开发 | `ms-python.python` |
+| Black Formatter | Python 格式化 | `ms-python.black-formatter` |
+| Prettier | 前端格式化 | `esbenp.prettier-vscode` |
+| YAML | YAML 支持 | `redhat.vscode-yaml` |
+| Even Better TOML | TOML 支持 | `tamasfe.even-better-toml` |
+| Rainbow CSV | CSV 高亮 | `mechatroner.rainbow-csv` |
+| Container Tools | 容器管理 | `ms-azuretools.vscode-containers` |
+| EditorConfig | 统一编码风格 | `EditorConfig.EditorConfig` |
+| Material Icon Theme | 文件图标 | `PKief.material-icon-theme` |
+
+> [!WARNING]
+> 扩展不建议装太多，注意核对发布者身份；第三方扩展存在投毒风险。
+
+一键安装：
+
+```powershell
+"MS-CEINTL.vscode-language-pack-zh-hans",
+"ms-python.python", "ms-python.black-formatter",
+"esbenp.prettier-vscode", "redhat.vscode-yaml", "tamasfe.even-better-toml",
+"mechatroner.rainbow-csv", "ms-azuretools.vscode-containers",
+"EditorConfig.EditorConfig", "PKief.material-icon-theme" |
+  ForEach-Object { code --install-extension $_ }
+```
+
+## 安装 NeoVim（可选）
+
+Neovim 是现代的 Vim 分支，支持插件、LSP、Lua。裸装只是毛胚房，推荐直接上
+[LazyVim](https://www.lazyvim.org/) 懒人包：
+
+```powershell
+scoop install neovim
+
+# 备份旧配置（如有）
+Move-Item "$env:LOCALAPPDATA\nvim" "$env:LOCALAPPDATA\nvim.bak" -ErrorAction SilentlyContinue
+
+# 克隆 starter（无法访问 GitHub 时加 gh-proxy 前缀）
+git clone "https://github.com/LazyVim/starter" "$env:LOCALAPPDATA\nvim"
+Remove-Item "$env:LOCALAPPDATA\nvim\.git" -Recurse -Force
+
+# 首次打开会自动安装插件，耗时属正常
+nvim
+```
+
+进终端后运行 `:LazyHealth` 检查插件状态。
+无法访问 GitHub 时，可按 LazyVim 文档修改 `lua\config\lazy.lua` 中的
+`lazyrepo` 与 `git.url_format`，为 GitHub 地址加代理前缀。
+
+## 开发语言环境
+
+### C / C++
+
+不装 Visual Studio（MSVC）的话，有两条路：
+
+**WinLibs（推荐，简单）**——用 Scoop 直接管理 GCC 工具链：
+
+```powershell
+scoop install mingw-winlibs
+gcc --version
+cmake --version
+```
+
+需要 LLVM 工具链就装 `versions/mingw-winlibs-llvm-ucrt`。
+
+**MSYS2（进阶）**——完整的 GNU 子系统 + pacman 包管理器，
+下面命令自动配好国内镜像并安装 GCC 与 CMake：
+
+```powershell
+scoop install dorado/msys2-cn
+ucrt64 -c "pacman --noconfirm -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake"
+scoop hold msys2-cn   # 升级交给 pacman，锁定 Scoop 版本
+```
+
+### Python
+
+2026 年强烈建议用 [uv](https://docs.astral.sh/uv/) 管理 Python 与依赖，
+相当于 Python 界的 npm，速度飞快：
+
+```powershell
+scoop install uv
+
+# PyPI 与 CPython 下载换国内源
+$Env:UV_DEFAULT_INDEX = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+[Environment]::SetEnvironmentVariable("UV_DEFAULT_INDEX", $Env:UV_DEFAULT_INDEX, "User")
+$Env:UV_PYTHON_INSTALL_MIRROR = "https://mirror.nju.edu.cn/github-release/astral-sh/python-build-standalone"
+[Environment]::SetEnvironmentVariable("UV_PYTHON_INSTALL_MIRROR", $Env:UV_PYTHON_INSTALL_MIRROR, "User")
+
+uv python install 3.14
+```
+
+需要传统解释器时再用 Scoop 装 Python 并换 pip 源：
+
+```powershell
+scoop install python
+reg import "$(scoop prefix python)\install-pep-514.reg"
+pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+```
+
+多版本切换：`scoop install python38` 后用 `scoop reset python` / `scoop reset python38` 切换。
+
+### Node.js
+
+```powershell
+# 推荐长期支持版
+scoop install nodejs-lts
+
+# npm 换国内源
+npm config set registry https://registry.npmmirror.com
+
+# 包管理器推荐 pnpm
+scoop install pnpm
+
+# 部分包的 scripts 写了 POSIX Shell，换用 Bash 执行
+npm config set script-shell bash
+```
+
+### Java
+
+```powershell
+scoop install java/openjdk
+java --version
+
+scoop install maven
+```
+
+Maven 换国内源（南京大学镜像），写入 `%USERPROFILE%\.m2\settings.xml`：
+
+```xml
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+  <mirrors>
+    <mirror>
+      <id>nju_mirror</id>
+      <mirrorOf>*</mirrorOf>
+      <url>https://repo.nju.edu.cn/maven/</url>
+    </mirror>
+  </mirrors>
+</settings>
+```
+
+Gradle 项目则通常在 `build.gradle` 的 `repositories` 里直接声明国内仓库地址。
+
+### Go
+
+```powershell
+scoop install go
+go env -w GOPROXY=https://goproxy.cn,direct
+go version
+```
+
+### Rust
+
+无需 Visual Studio，使用 GNU 工具链版本（需先按上文装好 C/C++ 环境）：
+
+```powershell
+# rustup 下载换南大镜像
+[Environment]::SetEnvironmentVariable("RUSTUP_UPDATE_ROOT", "https://mirrors.nju.edu.cn/rustup/rustup", "User")
+[Environment]::SetEnvironmentVariable("RUSTUP_DIST_SERVER", "https://mirrors.nju.edu.cn/rustup", "User")
+
+scoop install rustup-gnu
+rustc --version
+```
+
+Cargo 换中科大源，写入 `%USERPROFILE%\.cargo\config.toml`：
+
+```toml
+[source.crates-io]
+replace-with = 'ustc'
+
+[source.ustc]
+registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
+```
+
+## 数据库
+
+本地开发用，装完即用，数据目录已被 Scoop 持久化：
+
+```powershell
+scoop install mysql postgresql
+```
+
+MySQL 临时启动：`mysqld --console`；注册为系统服务：
+`sudo mysqld --install MySQL --defaults-file="$(scoop prefix mysql)\my.ini"`。
+
+## WSL2 + Docker（可选）
+
+> [!WARNING]
+> 该方案会启用 Hyper-V，与 VMware / VirtualBox 等第三方虚拟机冲突，按需选择。
+> 以下命令需要管理员权限的 PowerShell。
+
+```powershell
+scoop install sdoog/wsl2
+scoop install sdoog/wsl-ubuntu
+scoop hold wsl-ubuntu          # 发行版升级交给 wsl 自己
+scoop install sdoog/docker-desktop
+```
+
+重启电脑后即可使用 Docker Desktop。WSL 内换源可直接跑
+`wsl bash <(curl -sSL https://linuxmirrors.cn/main.sh)`。
+
+## 重装系统快速恢复
+
+Scoop 最大的优势是环境可复现。重装前导出清单：
+
+```powershell
+scoop export > scoopfile.json
+```
+
+重装系统后先按本文安装 Scoop，再一键恢复所有软件：
+
+```powershell
+scoop import scoopfile.json
+```
+
+配置文件类（Git、`$PROFILE`、VS Code settings.json、`.cargo\config.toml` 等）
+建议放进 Git 仓库或网盘同步。
+
+## 来源与致谢
+
+本文的核心思路、Scoop 介绍与大部分安装指导来自潇然工作室的文章：
+
+- 原文：[Scoop 搭建 Windows 开发环境](https://www.xrgzs.top/posts/scoop-dev-setup)
+- 作者：潇然工作室（狂犬主子），发布于 2025-01-09，更新于 2026-07-12
+- 协议：CC BY-NC-SA 4.0，本文同样以该协议分享
+
+感谢原作者的整理，本文在其基础上做了个人化的精简与补充。

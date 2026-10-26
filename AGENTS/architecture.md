@@ -87,6 +87,8 @@ src/
 | `/` | `src/pages/index.astro` |
 | `/posts/`、`/posts/2/`… | `src/pages/posts/[...page].astro` |
 | `/posts/<slug>/` | `src/pages/posts/[...slug]/index.astro` |
+| `/posts/<slug>/index.md` | `src/pages/posts/[...slug]/index.md.ts`（Markdown 原文，供 AI Agent） |
+| `/llms.txt` | `src/pages/llms.txt.ts`（AI Agent 站点阅读指南） |
 | `/tags/` | `src/pages/tags/index.astro` |
 | `/tags/<tag>/` | `src/pages/tags/[tag]/[...page].astro` |
 | `/archives/` | `src/pages/archives/index.astro` |

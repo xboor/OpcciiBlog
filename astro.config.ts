@@ -43,8 +43,12 @@ export default defineConfig({
   i18n: {
     locales: ["zh", "en"],
     defaultLocale: "zh",
+    // en 页面尚未翻译，rewrite 到 zh 页面（英文 UI + 中文正文），
+    // 让 /en/ 路径完整可用，供 Header 语言切换入口跳转。
+    fallback: { en: "zh" },
     routing: {
       prefixDefaultLocale: false,
+      fallbackType: "rewrite",
     },
   },
   markdown: {
